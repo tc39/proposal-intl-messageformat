@@ -3,7 +3,8 @@
 ## Status
 
 Champions: Eemeli Aro (Mozilla), Daniel Minor (Mozilla)
-Stage: 0
+
+### Stage: 0
 
 ## Motivation
 
