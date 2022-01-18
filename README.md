@@ -30,38 +30,57 @@ identifier and a previously specified locale.
 
 The MF2.0 specification is still being developed by the working group. The API below is based
 upon one proposal under consideration, but should not be considered representative of a
-consensus among the working group.
+consensus among the working group. In particular, the API shape of MessageFormatOptions,
+Message and Scope will depend upon the data model chosen by the working group.
+
+A `Resource` is a group of related messages for a single locale. Messages can be organized
+in a flat structure, or in hierarchy, using paths. Conceptually, it is similar to a file
+containing a set of messages, but there are no constrains implied on the underlying
+implementation.
+
+The interface provided by `Message` is part of the MF2.0 data model being developed by the
+MF2.0 working group.
+
+```
+  interface Message { }
+
+  interface Resource {
+    getId(): string;
+
+    getMessage(path: string[]): Message | undefined;
+  }
+```
+
+The `Intl.MessageFormat` constructor creates `MessageFormat` instances for a given locale,
+`MessageFormatOptions` and optional set of `Resource`s. The exact interface for
+`MessageFormatOptions` is still under development by the MF2.0 working group. The `Scope`
+provides lookup for variable references used for formatting. It is also still under
+development by the working group.
 
 ```
   interface MessageFormatOptions { }
-
-  interface Resource { }
-
-  interface ResourceReader { }
 
   interface Scope { }
 
   Intl.MessageFormat(
     locales: string | string[],
     options?: MessageFormatOptions | null,
-    ...resources: (Resource | ResourceReader)[]
-  );
+    ...resources: Resource[]
+  ) : MessageFormat;
 
-  Intl.MessageFormat.addResources(...resources: (Resource | ResourceReader)[]);
+  MessageFormat.addResources(...resources: Resource[]);
 
-  Intl.MessageFormat.format(msgPath: string | string[], scope?: Scope): string;
+  MessageFormat.format(msgPath: string | string[], scope?: Scope): string;
 
-  Intl.MessageFormat.format(resId: string, msgPath: string | string[], scope?: Scope): string;
+  MessageFormat.format(resId: string, msgPath: string | string[], scope?: Scope): string;
 
-  Intl.MessageFormat.formatToParts(
+  MessageFormat.formatToParts(
     resId: string,
     msgPath: string | string[],
     scope?: Scope
   ): MessageFormatPart[];
 
-  Intl.MessageFormat.getMessage(resId: string, path: string | string[]) : string;
-
-  Intl.MessageFormat.resolvedOptions() : object;
+  MessageFormat.resolvedOptions() : object;
 ```
 
 ## Comparison
