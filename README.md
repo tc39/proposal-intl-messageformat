@@ -30,20 +30,23 @@ identifier and a previously specified locale.
 
 The MF2.0 specification is still being developed by the working group. The API below is based
 upon one proposal under consideration, but should not be considered representative of a
-consensus among the working group. In particular, the API shape of MessageFormatOptions,
-Message and Scope will depend upon the data model chosen by the working group.
+consensus among the working group. In particular, the API shape of `MessageFormatOptions`,
+`Message`, `Scope` and `ResolvedOptions` will depend upon the data model chosen by the
+working group.
+
+The interface provided by `Message` will be defined by the MF2.0 data model developed by
+the MF2.0 working group. It contains localized text for a particular locale.
+
+```
+  interface Message { }
+```
 
 A `Resource` is a group of related messages for a single locale. Messages can be organized
 in a flat structure, or in hierarchy, using paths. Conceptually, it is similar to a file
 containing a set of messages, but there are no constrains implied on the underlying
 implementation.
 
-The interface provided by `Message` is part of the MF2.0 data model being developed by the
-MF2.0 working group.
-
 ```
-  interface Message { }
-
   interface Resource {
     getId(): string;
 
@@ -52,10 +55,14 @@ MF2.0 working group.
 ```
 
 The `Intl.MessageFormat` constructor creates `MessageFormat` instances for a given locale,
-`MessageFormatOptions` and optional set of `Resource`s. The exact interface for
-`MessageFormatOptions` is still under development by the MF2.0 working group. The `Scope`
-provides lookup for variable references used for formatting. It is also still under
-development by the working group.
+`MessageFormatOptions` and an optional set of `Resource`s. The remaining operations are
+defined on `MessageFormat` instances.
+
+The interfaces for `MessageFormatOptions`, `Scope` and `ResolvedOptions` will be defined
+by the MF2.0 data model. `MessageFormatOptions` contains configuration options for the
+creation of `MessageFormat` instances. The `Scope` object is used to lookup variable
+references used in the `Message`. The `ResolvedOptions` object contains the options
+resolved during the construction of the `MessageFormat` instance.
 
 ```
   interface MessageFormatOptions { }
@@ -80,7 +87,7 @@ development by the working group.
     scope?: Scope
   ): MessageFormatPart[];
 
-  MessageFormat.resolvedOptions() : object;
+  MessageFormat.resolvedOptions() : ResolvedOptions;
 ```
 
 ## Comparison
