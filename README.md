@@ -35,13 +35,13 @@ rather than relying upon userland libraries.
 The MF2 specification is still being developed by the working group.
 The API below is based upon one proposal under consideration,
 but should not be considered representative of a consensus among the working group.
-In particular, the API shape of
-`MessageFormatOptions`, `Message`, `Scope` and `ResolvedOptions`
+In particular, the API shapes of
+`MessageFormatOptions`, `Message`, and `ResolvedOptions`
 will depend upon the data model chosen by the working group.
 
 The interface provided by `Message` will be defined by
 the MF2 data model developed by the MF2 working group.
-It contains localized text for a particular locale.
+It contains a parsed representation of localized text for a particular locale.
 
 ```ts
 interface Message {}
@@ -54,7 +54,7 @@ but there are no constrains implied on the underlying implementation.
 
 ```ts
 interface Resource {
-  getId(): string;
+  id: string;
 
   getMessage(path: string[]): Message | undefined;
 }
@@ -65,18 +65,22 @@ The `Intl.MessageFormat` constructor creates `MessageFormat` instances for a giv
 The remaining operations are defined on `MessageFormat` instances.
 
 The interfaces for
-`MessageFormatOptions`, `Scope` and `ResolvedOptions`
-will be defined by the MF2 data model.
+`MessageFormatOptions` and `ResolvedOptions`
+will depend on the final MF2 data model.
 `MessageFormatOptions` contains configuration options
 for the creation of `MessageFormat` instances.
-The `Scope` object is used to lookup variable references used in the `Message`.
 The `ResolvedOptions` object contains the options
 resolved during the construction of the `MessageFormat` instance.
 
 ```ts
-interface MessageFormatOptions { }
+interface MessageFormatOptions {
+  localeMatcher?: 'best fit' | 'lookup';
+  ...
+}
 
-interface Scope { }
+type MsgPath = string | string[] | { resId: string, path: string[] }
+
+type Scope = Record<string, unknown>
 
 interface Intl.MessageFormat {
   new (
@@ -87,16 +91,93 @@ interface Intl.MessageFormat {
 
   addResources(...resources: Resource[]);
 
-  format(msgPath: string | string[], scope?: Scope): string;
-  format(resId: string, msgPath: string | string[], scope?: Scope): string;
+  format(
+    msgPath: MsgPath,
+    scope?: Scope | null,
+    onError?: (error: Error, value: MessageValue) => void
+  ): string;
 
-  formatToParts(
-    resId: string,
-    msgPath: string | string[],
-    scope?: Scope
-  ): MessageFormatPart[];
+  getMessage(
+    msgPath: MsgPath,
+    scope?: Scope | null,
+    onError?: (error: Error, value: MessageValue) => void
+  ): ResolvedMessage | undefined;
 
   resolvedOptions(): ResolvedOptions;
+}
+```
+
+For formatting a message, two methods are provided: `format()` and `getMessage()`.
+The first of these will always return a simple string,
+while the latter returns a `ResolvedMessage` object or `undefined` if the message was not found.
+These methods have the following arguments:
+
+- `msgPath` identifies the message from those available in the current resources.
+  If all added resources share the same `id` value,
+  the path may be given as a string or a string array.
+- `scope` is used to lookup variable references used in the `Message`.
+- `onError` argument defines an error handler that will be called if
+  message resolution or formatting fails.
+  If `onError` is not defined,
+  errors will be ignored and a fallback representation used for the corresponding message part.
+
+`ResolvedMessage` is intended to provide a building block for the localization of messages
+in contexts where its representation as a plain string would not be sufficient.
+The `source` of a `MessageValue` provides an opaque identifier for the value,
+such as `"$foo"` for a variable.
+The `meta` of a `MessageValue` is a map of resolved metadata for the value in question.
+Each `MessageValue` provides a `toString()` method;
+for numerical and date values a `toParts()` method is also provided,
+taking into account the locale context as well as any formatting options.
+`MessageFallback` is used when the resolution of a part of the message failed.
+
+Values matching the structure of `MessageNumber` and `MessageDateTime`
+(i.e. with the corresponding `type`, `value` and `options` fields)
+may be used in `Scope` as partially formatted values.
+
+```ts
+interface LocaleContext {
+  locales: string[];
+  localeMatcher: "best fit" | "lookup" | undefined;
+}
+
+interface MessageValue {
+  type: string;
+  value: unknown;
+  localeContext?: LocaleContext;
+  source?: string;
+  meta?: Record<string, string>;
+  toString(): string;
+}
+
+interface MessageLiteral extends MessageValue {
+  type: "literal";
+  value: string;
+}
+
+interface MessageNumber extends MessageValue {
+  type: "number";
+  value: number | bigint;
+  options?: Intl.NumberFormatOptions & Intl.PluralRulesOptions;
+  getPluralRule(): Intl.LDMLPluralRule;
+  toParts(): Intl.NumberFormatPart[];
+}
+
+interface MessageDateTime extends MessageValue {
+  type: "datetime";
+  value: Date;
+  options?: Intl.DateTimeFormatOptions;
+  toParts(): Intl.DateTimeFormatPart[];
+}
+
+interface MessageFallback extends MessageValue {
+  type: "fallback";
+  value: undefined;
+}
+
+interface ResolvedMessage extends MessageValue {
+  type: "message";
+  value: Iterable<MessageValue>;
 }
 ```
 
