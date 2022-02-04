@@ -94,13 +94,13 @@ interface Intl.MessageFormat {
   format(
     msgPath: MsgPath,
     scope?: Scope | null,
-    onError?: (error: Error) => void
+    onError?: (error: Error, value: MessageValue) => void
   ): string;
 
   getMessage(
     msgPath: MsgPath,
     scope?: Scope | null,
-    onError?: (error: Error) => void
+    onError?: (error: Error, value: MessageValue) => void
   ): ResolvedMessage | undefined;
 
   resolvedOptions(): ResolvedOptions;
