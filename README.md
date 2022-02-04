@@ -21,8 +21,8 @@ already present in the browser to the web, rather than relying upon userland lib
 
 ## Use cases
 
-* The primary use case is the retrieval of localized text ("a message") given a message
-identifier and a previously specified locale.
+- The primary use case is the retrieval of localized text ("a message") given a message
+  identifier and a previously specified locale.
 
 ## Description
 
@@ -37,8 +37,8 @@ working group.
 The interface provided by `Message` will be defined by the MF2 data model developed by
 the MF2 working group. It contains localized text for a particular locale.
 
-```
-  interface Message { }
+```ts
+interface Message {}
 ```
 
 A `Resource` is a group of related messages for a single locale. Messages can be organized
@@ -46,12 +46,12 @@ in a flat structure, or in hierarchy, using paths. Conceptually, it is similar t
 containing a set of messages, but there are no constrains implied on the underlying
 implementation.
 
-```
-  interface Resource {
-    getId(): string;
+```ts
+interface Resource {
+  getId(): string;
 
-    getMessage(path: string[]): Message | undefined;
-  }
+  getMessage(path: string[]): Message | undefined;
+}
 ```
 
 The `Intl.MessageFormat` constructor creates `MessageFormat` instances for a given locale,
@@ -64,30 +64,31 @@ creation of `MessageFormat` instances. The `Scope` object is used to lookup vari
 references used in the `Message`. The `ResolvedOptions` object contains the options
 resolved during the construction of the `MessageFormat` instance.
 
-```
-  interface MessageFormatOptions { }
+```ts
+interface MessageFormatOptions { }
 
-  interface Scope { }
+interface Scope { }
 
-  Intl.MessageFormat(
+interface Intl.MessageFormat {
+  new (
     locales: string | string[],
     options?: MessageFormatOptions | null,
     ...resources: Resource[]
-  ) : MessageFormat;
+  ): Intl.MessageFormat;
 
-  MessageFormat.addResources(...resources: Resource[]);
+  addResources(...resources: Resource[]);
 
-  MessageFormat.format(msgPath: string | string[], scope?: Scope): string;
+  format(msgPath: string | string[], scope?: Scope): string;
+  format(resId: string, msgPath: string | string[], scope?: Scope): string;
 
-  MessageFormat.format(resId: string, msgPath: string | string[], scope?: Scope): string;
-
-  MessageFormat.formatToParts(
+  formatToParts(
     resId: string,
     msgPath: string | string[],
     scope?: Scope
   ): MessageFormatPart[];
 
-  MessageFormat.resolvedOptions() : ResolvedOptions;
+  resolvedOptions(): ResolvedOptions;
+}
 ```
 
 ## Comparison
