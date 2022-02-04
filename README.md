@@ -8,15 +8,15 @@ Champions: Eemeli Aro (Mozilla), Daniel Minor (Mozilla)
 
 ## Motivation
 
-Intl.MessageFormat will build upon the [MessageFormat 2.0](https://github.com/unicode-org/message-format-wg/) (hereafter MF2.0)
-specification currently under development. It will allow the use of MF2.0 resources
+Intl.MessageFormat will build upon the [MessageFormat 2.0](https://github.com/unicode-org/message-format-wg/) (hereafter MF2)
+specification currently under development. It will allow the use of MF2 resources
 to localize web sites, enabling localization of the web using industry standard tooling and
 processes. This should in turn make it easier to localize the web, increasing the openness
 and accessibility of the web for speakers of languages other than the handful of languages for
 which localization is typically done.
 
-It is likely that eventually browsers themselves will be localized using MF2.0. This is already
-planned for Firefox. If this happens, it will make sense to expose the MF2.0 implementation
+It is likely that eventually browsers themselves will be localized using MF2. This is already
+planned for Firefox. If this happens, it will make sense to expose the MF2 implementation
 already present in the browser to the web, rather than relying upon userland libraries.
 
 ## Use cases
@@ -28,14 +28,14 @@ identifier and a previously specified locale.
 
 ### API
 
-The MF2.0 specification is still being developed by the working group. The API below is based
+The MF2 specification is still being developed by the working group. The API below is based
 upon one proposal under consideration, but should not be considered representative of a
 consensus among the working group. In particular, the API shape of `MessageFormatOptions`,
 `Message`, `Scope` and `ResolvedOptions` will depend upon the data model chosen by the
 working group.
 
-The interface provided by `Message` will be defined by the MF2.0 data model developed by
-the MF2.0 working group. It contains localized text for a particular locale.
+The interface provided by `Message` will be defined by the MF2 data model developed by
+the MF2 working group. It contains localized text for a particular locale.
 
 ```
   interface Message { }
@@ -59,7 +59,7 @@ The `Intl.MessageFormat` constructor creates `MessageFormat` instances for a giv
 defined on `MessageFormat` instances.
 
 The interfaces for `MessageFormatOptions`, `Scope` and `ResolvedOptions` will be defined
-by the MF2.0 data model. `MessageFormatOptions` contains configuration options for the
+by the MF2 data model. `MessageFormatOptions` contains configuration options for the
 creation of `MessageFormat` instances. The `Scope` object is used to lookup variable
 references used in the `Message`. The `ResolvedOptions` object contains the options
 resolved during the construction of the `MessageFormat` instance.
@@ -92,9 +92,9 @@ resolved during the construction of the `MessageFormat` instance.
 
 ## Comparison
 
-The MF2.0 specification is being developed based upon lessons learned from existing
+The MF2 specification is being developed based upon lessons learned from existing
 systems including
-[MessageFormat](https://unicode-org.github.io/icu/userguide/format_parse/messages/) and [Fluent](https://projectfluent.org/).
+[ICU MessageFormat](https://unicode-org.github.io/icu/userguide/format_parse/messages/) and [Fluent](https://projectfluent.org/).
 
 The implementation of Fluent within Firefox mostly relies upon a declarative syntax in the
 DOM, but it does provide an [API](https://firefox-source-docs.mozilla.org/l10n/fluent/tutorial.html#non-markup-localization)
