@@ -72,11 +72,6 @@ for the creation of `MessageFormat` instances.
 The `ResolvedOptions` object contains the options
 resolved during the construction of the `MessageFormat` instance.
 
-The `msgPath` argument identifies the message from those available in the current resources.
-If all added resources share the same `id` value,
-the path may be given as a string or a string array.
-The `scope` argument is used to lookup variable references used in the `Message`.
-
 ```ts
 interface MessageFormatOptions {
   localeMatcher?: 'best fit' | 'lookup';
@@ -96,9 +91,17 @@ interface Intl.MessageFormat {
 
   addResources(...resources: Resource[]);
 
-  format(msgPath: MsgPath, scope?: Scope): string;
+  format(
+    msgPath: MsgPath,
+    scope?: Scope | null,
+    onError?: (error: Error) => void
+  ): string;
 
-  getMessage(msgPath: MsgPath, scope?: Scope): ResolvedMessage | undefined;
+  getMessage(
+    msgPath: MsgPath,
+    scope?: Scope | null,
+    onError?: (error: Error) => void
+  ): ResolvedMessage | undefined;
 
   resolvedOptions(): ResolvedOptions;
 }
@@ -107,6 +110,16 @@ interface Intl.MessageFormat {
 For formatting a message, two methods are provided: `format()` and `getMessage()`.
 The first of these will always return a simple string,
 while the latter returns a `ResolvedMessage` object or `undefined` if the message was not found.
+These methods have the following arguments:
+
+- `msgPath` identifies the message from those available in the current resources.
+  If all added resources share the same `id` value,
+  the path may be given as a string or a string array.
+- `scope` is used to lookup variable references used in the `Message`.
+- `onError` argument defines an error handler that will be called if
+  message resolution or formatting fails.
+  If `onError` is not defined,
+  errors will be ignored and a fallback representation used for the corresponding message part.
 
 `ResolvedMessage` is intended to provide a building block for the localization of messages
 in contexts where its representation as a plain string would not be sufficient.
