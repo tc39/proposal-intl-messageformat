@@ -35,13 +35,13 @@ rather than relying upon userland libraries.
 The MF2 specification is still being developed by the working group.
 The API below is based upon one proposal under consideration,
 but should not be considered representative of a consensus among the working group.
-In particular, the API shape of
-`MessageFormatOptions`, `Message`, `Scope` and `ResolvedOptions`
+In particular, the API shapes of
+`MessageFormatOptions`, `Message`, and `ResolvedOptions`
 will depend upon the data model chosen by the working group.
 
 The interface provided by `Message` will be defined by
 the MF2 data model developed by the MF2 working group.
-It contains localized text for a particular locale.
+It contains a parsed representation of localized text for a particular locale.
 
 ```ts
 interface Message {}
@@ -54,7 +54,7 @@ but there are no constrains implied on the underlying implementation.
 
 ```ts
 interface Resource {
-  getId(): string;
+  id: string;
 
   getMessage(path: string[]): Message | undefined;
 }
@@ -65,8 +65,8 @@ The `Intl.MessageFormat` constructor creates `MessageFormat` instances for a giv
 The remaining operations are defined on `MessageFormat` instances.
 
 The interfaces for
-`MessageFormatOptions`, `Scope` and `ResolvedOptions`
-will be defined by the MF2 data model.
+`MessageFormatOptions` and `ResolvedOptions`
+will depend on the final MF2 data model.
 `MessageFormatOptions` contains configuration options
 for the creation of `MessageFormat` instances.
 The `Scope` object is used to lookup variable references used in the `Message`.
@@ -74,9 +74,12 @@ The `ResolvedOptions` object contains the options
 resolved during the construction of the `MessageFormat` instance.
 
 ```ts
-interface MessageFormatOptions { }
+interface MessageFormatOptions {
+  localeMatcher?: 'best fit' | 'lookup';
+  ...
+}
 
-interface Scope { }
+type Scope = Record<string, unknown>
 
 interface Intl.MessageFormat {
   new (
