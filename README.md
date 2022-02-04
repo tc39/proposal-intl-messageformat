@@ -98,9 +98,73 @@ interface Intl.MessageFormat {
 
   format(msgPath: MsgPath, scope?: Scope): string;
 
-  formatToParts(msgPath: MsgPath, scope?: Scope): MessageFormatPart[];
+  getMessage(msgPath: MsgPath, scope?: Scope): ResolvedMessage | undefined;
 
   resolvedOptions(): ResolvedOptions;
+}
+```
+
+For formatting a message, two methods are provided: `format()` and `getMessage()`.
+The first of these will always return a simple string,
+while the latter returns a `ResolvedMessage` object or `undefined` if the message was not found.
+
+`ResolvedMessage` is intended to provide a building block for the localization of messages
+in contexts where its representation as a plain string would not be sufficient.
+The `source` of a `MessageValue` provides an opaque identifier for the value,
+such as `"$foo"` for a variable.
+The `meta` of a `MessageValue` is a map of resolved metadata for the value in question.
+Each `MessageValue` provides a `toString()` method;
+for numerical and date values a `toParts()` method is also provided,
+taking into account the locale context as well as any formatting options.
+`MessageFallback` is used when the resolution of a part of the message failed.
+
+Values matching the structure of `MessageNumber` and `MessageDateTime`
+(i.e. with the corresponding `type`, `value` and `options` fields)
+may be used in `Scope` as partially formatted values.
+
+```ts
+interface LocaleContext {
+  locales: string[];
+  localeMatcher: "best fit" | "lookup" | undefined;
+}
+
+interface MessageValue {
+  type: string;
+  value: unknown;
+  localeContext?: LocaleContext;
+  source?: string;
+  meta?: Record<string, string>;
+  toString(): string;
+}
+
+interface MessageLiteral extends MessageValue {
+  type: "literal";
+  value: string;
+}
+
+interface MessageNumber extends MessageValue {
+  type: "number";
+  value: number | bigint;
+  options?: Intl.NumberFormatOptions & Intl.PluralRulesOptions;
+  getPluralRule(): Intl.LDMLPluralRule;
+  toParts(): Intl.NumberFormatPart[];
+}
+
+interface MessageDateTime extends MessageValue {
+  type: "datetime";
+  value: Date;
+  options?: Intl.DateTimeFormatOptions;
+  toParts(): Intl.DateTimeFormatPart[];
+}
+
+interface MessageFallback extends MessageValue {
+  type: "fallback";
+  value: undefined;
+}
+
+interface ResolvedMessage extends MessageValue {
+  type: "message";
+  value: Iterable<MessageValue>;
 }
 ```
 
