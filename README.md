@@ -69,15 +69,21 @@ The interfaces for
 will depend on the final MF2 data model.
 `MessageFormatOptions` contains configuration options
 for the creation of `MessageFormat` instances.
-The `Scope` object is used to lookup variable references used in the `Message`.
 The `ResolvedOptions` object contains the options
 resolved during the construction of the `MessageFormat` instance.
+
+The `msgPath` argument identifies the message from those available in the current resources.
+If all added resources share the same `id` value,
+the path may be given as a string or a string array.
+The `scope` argument is used to lookup variable references used in the `Message`.
 
 ```ts
 interface MessageFormatOptions {
   localeMatcher?: 'best fit' | 'lookup';
   ...
 }
+
+type MsgPath = string | string[] | { resId: string, path: string[] }
 
 type Scope = Record<string, unknown>
 
@@ -90,14 +96,9 @@ interface Intl.MessageFormat {
 
   addResources(...resources: Resource[]);
 
-  format(msgPath: string | string[], scope?: Scope): string;
-  format(resId: string, msgPath: string | string[], scope?: Scope): string;
+  format(msgPath: MsgPath, scope?: Scope): string;
 
-  formatToParts(
-    resId: string,
-    msgPath: string | string[],
-    scope?: Scope
-  ): MessageFormatPart[];
+  formatToParts(msgPath: MsgPath, scope?: Scope): MessageFormatPart[];
 
   resolvedOptions(): ResolvedOptions;
 }
