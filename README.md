@@ -200,5 +200,5 @@ when not being used to localize the DOM.
 ### Polyfill/transpiler implementations
 
 The MessageFormat 2.0 specification is under development.
-An experimental implementation of one proposal for the MessageFormat 2.0 specification is available at
-[mf2](https://github.com/messageformat/messageformat/tree/mf2/packages/messageformat)
+An experimental implementation of one proposal for the MessageFormat 2.0 specification is available under the
+[messageformat](https://github.com/messageformat/messageformat/tree/master/packages/mf2-messageformat) project.
