@@ -47,13 +47,13 @@ It contains a parsed representation of localized text for a particular locale.
 interface Message {}
 ```
 
-A `Resource` is a group of related messages for a single locale.
+A `MessageResource` is a group of related messages for a single locale.
 Messages can be organized in a flat structure, or in hierarchy, using paths.
 Conceptually, it is similar to a file containing a set of messages,
 but there are no constrains implied on the underlying implementation.
 
 ```ts
-interface Resource {
+interface MessageResource {
   id: string;
 
   getMessage(path: string[]): Message | undefined;
@@ -61,7 +61,7 @@ interface Resource {
 ```
 
 The `Intl.MessageFormat` constructor creates `MessageFormat` instances for a given locale,
-`MessageFormatOptions` and an optional set of `Resource`s.
+`MessageFormatOptions` and an optional set of `MessageResource`s.
 The remaining operations are defined on `MessageFormat` instances.
 
 The interfaces for
@@ -78,28 +78,24 @@ interface MessageFormatOptions {
   ...
 }
 
-type MsgPath = string | string[] | { resId: string, path: string[] }
-
-type Scope = Record<string, unknown>
-
 interface Intl.MessageFormat {
   new (
     locales: string | string[],
-    options?: MessageFormatOptions | null,
-    ...resources: Resource[]
+    options?: MessageFormatOptions,
+    ...resources: MessageResource[]
   ): Intl.MessageFormat;
 
-  addResources(...resources: Resource[]);
+  addResource(resource: MessageResource);
 
   format(
-    msgPath: MsgPath,
-    scope?: Scope | null,
+    msgPath: string | string[] | { resId: string, path: string[] },
+    values?: Record<string, unknown>,
     onError?: (error: Error, value: MessageValue) => void
   ): string;
 
   getMessage(
-    msgPath: MsgPath,
-    scope?: Scope | null,
+    msgPath: string | string[] | { resId: string, path: string[] },
+    values?: Record<string, unknown>,
     onError?: (error: Error, value: MessageValue) => void
   ): ResolvedMessage | undefined;
 
@@ -115,7 +111,7 @@ These methods have the following arguments:
 - `msgPath` identifies the message from those available in the current resources.
   If all added resources share the same `id` value,
   the path may be given as a string or a string array.
-- `scope` is used to lookup variable references used in the `Message`.
+- `values` are to lookup variable references used in the `Message`.
 - `onError` argument defines an error handler that will be called if
   message resolution or formatting fails.
   If `onError` is not defined,
@@ -133,7 +129,7 @@ taking into account the locale context as well as any formatting options.
 
 Values matching the structure of `MessageNumber` and `MessageDateTime`
 (i.e. with the corresponding `type`, `value` and `options` fields)
-may be used in `Scope` as partially formatted values.
+may be used in the `values` argument as partially formatted values.
 
 ```ts
 interface LocaleContext {
