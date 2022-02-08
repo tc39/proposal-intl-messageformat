@@ -36,15 +36,18 @@ The MF2 specification is still being developed by the working group.
 The API below is based upon one proposal under consideration,
 but should not be considered representative of a consensus among the working group.
 In particular, the API shapes of
-`MessageFormatOptions`, `Message`, and `ResolvedOptions`
+`MessageFormatOptions`, `MessageData`, `MessageResourceData`, and `ResolvedMessageFormatOptions`
 will depend upon the data model chosen by the working group.
 
-The interface provided by `Message` will be defined by
+The `MessageData` and `MessageResourceData` interfaces will be defined by
 the MF2 data model developed by the MF2 working group.
-It contains a parsed representation of localized text for a particular locale.
+`MessageData` contains a parsed representation of a single message for a particular locale.
+`MessageResourceData` containts a potentially hierarchical collection of `MessageData` objects.
 
 ```ts
-interface Message {}
+interface MessageData {}
+
+interface MessageResourceData {}
 ```
 
 A `MessageResource` is a group of related messages for a single locale.
@@ -52,11 +55,22 @@ Messages can be organized in a flat structure, or in hierarchy, using paths.
 Conceptually, it is similar to a file containing a set of messages,
 but there are no constrains implied on the underlying implementation.
 
+A `MessageResource` instance may be constructed either from a string containing
+the MF2 syntax representation of a message resource,
+or from an otherwise constructed `MessageResourceData` object.
+
 ```ts
 interface MessageResource {
+  static from(source: string): MessageResource;
+
+  new (data: MessageResourceData): MessageResource;
+
+  // Not directly used by formatting
+  data: MessageResourceData;
+
   id: string;
 
-  getMessage(path: string[]): Message | undefined;
+  getMessage(path: string[]): MessageData | undefined;
 }
 ```
 
@@ -65,11 +79,11 @@ The `Intl.MessageFormat` constructor creates `MessageFormat` instances for a giv
 The remaining operations are defined on `MessageFormat` instances.
 
 The interfaces for
-`MessageFormatOptions` and `ResolvedOptions`
+`MessageFormatOptions` and `ResolvedMessageFormatOptions`
 will depend on the final MF2 data model.
 `MessageFormatOptions` contains configuration options
 for the creation of `MessageFormat` instances.
-The `ResolvedOptions` object contains the options
+The `ResolvedMessageFormatOptions` object contains the options
 resolved during the construction of the `MessageFormat` instance.
 
 ```ts
@@ -78,12 +92,12 @@ interface MessageFormatOptions {
   ...
 }
 
-interface Intl.MessageFormat {
+interface MessageFormat {
   new (
     locales: string | string[],
     options?: MessageFormatOptions,
     ...resources: MessageResource[]
-  ): Intl.MessageFormat;
+  ): MessageFormat;
 
   addResource(resource: MessageResource);
 
@@ -99,7 +113,7 @@ interface Intl.MessageFormat {
     onError?: (error: Error, value: MessageValue) => void
   ): ResolvedMessage | undefined;
 
-  resolvedOptions(): ResolvedOptions;
+  resolvedOptions(): ResolvedMessageFormatOptions;
 }
 ```
 
@@ -111,7 +125,7 @@ These methods have the following arguments:
 - `msgPath` identifies the message from those available in the current resources.
   If all added resources share the same `id` value,
   the path may be given as a string or a string array.
-- `values` are to lookup variable references used in the `Message`.
+- `values` are to lookup variable references used in the `MessageData`.
 - `onError` argument defines an error handler that will be called if
   message resolution or formatting fails.
   If `onError` is not defined,
