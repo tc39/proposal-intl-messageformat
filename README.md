@@ -28,9 +28,7 @@ rather than relying upon userland libraries.
 - The primary use case is the retrieval of localized text ("a message")
   given a message identifier and a previously specified locale.
 
-## Description
-
-### API
+## API Description
 
 The MF2 specification is still being developed by the working group.
 The API below is based upon one proposal under consideration,
@@ -38,6 +36,8 @@ but should not be considered representative of a consensus among the working gro
 In particular, the API shapes of
 `MessageFormatOptions`, `MessageData`, `MessageResourceData`, and `ResolvedMessageFormatOptions`
 will depend upon the data model chosen by the working group.
+
+### MessageData and MessageResourceData
 
 The `MessageData` and `MessageResourceData` interfaces will be defined by
 the MF2 data model developed by the MF2 working group.
@@ -49,6 +49,8 @@ interface MessageData {}
 
 interface MessageResourceData {}
 ```
+
+### MessageResource
 
 A `MessageResource` is a group of related messages for a single locale.
 Messages can be organized in a flat structure, or in hierarchy, using paths.
@@ -73,6 +75,8 @@ interface MessageResource {
   getMessage(path: string[]): MessageData | undefined;
 }
 ```
+
+### MessageFormat
 
 The `Intl.MessageFormat` constructor creates `MessageFormat` instances for a given locale,
 `MessageFormatOptions` and an optional set of `MessageResource`s.
@@ -103,6 +107,8 @@ interface MessageFormat {
   resolvedOptions(): ResolvedMessageFormatOptions;
 }
 ```
+
+#### Constructor options and resolvedOptions()
 
 The interfaces for
 `MessageFormatOptions` and `ResolvedMessageFormatOptions`
@@ -137,6 +143,8 @@ type MessageFormatterFunction = (
 ) => MessageValue
 ```
 
+#### format() and getMessage()
+
 For formatting a message, two methods are provided: `format()` and `getMessage()`.
 The first of these will always return a simple string,
 while the latter returns a `ResolvedMessage` object or `undefined` if the message was not found.
@@ -150,6 +158,8 @@ These methods have the following arguments:
   message resolution or formatting fails.
   If `onError` is not defined,
   errors will be ignored and a fallback representation used for the corresponding message part.
+
+### MessageValue
 
 `ResolvedMessage` is intended to provide a building block for the localization of messages
 in contexts where its representation as a plain string would not be sufficient.
