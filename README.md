@@ -78,20 +78,7 @@ The `Intl.MessageFormat` constructor creates `MessageFormat` instances for a giv
 `MessageFormatOptions` and an optional set of `MessageResource`s.
 The remaining operations are defined on `MessageFormat` instances.
 
-The interfaces for
-`MessageFormatOptions` and `ResolvedMessageFormatOptions`
-will depend on the final MF2 data model.
-`MessageFormatOptions` contains configuration options
-for the creation of `MessageFormat` instances.
-The `ResolvedMessageFormatOptions` object contains the options
-resolved during the construction of the `MessageFormat` instance.
-
 ```ts
-interface MessageFormatOptions {
-  localeMatcher?: 'best fit' | 'lookup';
-  ...
-}
-
 interface MessageFormat {
   new (
     locales: string | string[],
@@ -102,19 +89,52 @@ interface MessageFormat {
   addResource(resource: MessageResource);
 
   format(
-    msgPath: string | string[] | { resId: string, path: string[] },
+    msgPath: string | string[] | { resId: string; path: string[] },
     values?: Record<string, unknown>,
     onError?: (error: Error, value: MessageValue) => void
   ): string;
 
   getMessage(
-    msgPath: string | string[] | { resId: string, path: string[] },
+    msgPath: string | string[] | { resId: string; path: string[] },
     values?: Record<string, unknown>,
     onError?: (error: Error, value: MessageValue) => void
   ): ResolvedMessage | undefined;
 
   resolvedOptions(): ResolvedMessageFormatOptions;
 }
+```
+
+The interfaces for
+`MessageFormatOptions` and `ResolvedMessageFormatOptions`
+will depend on the final MF2 data model.
+`MessageFormatOptions` contains configuration options
+for the creation of `MessageFormat` instances.
+The `ResolvedMessageFormatOptions` object contains the options
+resolved during the construction of the `MessageFormat` instance.
+
+Custom user-defined message formatting function may defined by the `formatters` option.
+These allow for any data types to be handled by custom functions.
+Formatting functions may be referenced within messages,
+and then called with the resolved values of their arguments and options.
+At least two formatting functions are to be provided by the implementation:
+
+- `number`, returning a `MessageNumber`
+- `datetime`, returning a `MessageDateTime`
+
+These may be shadowed by user-defined functions defined in the formatters option.
+
+```ts
+interface MessageFormatOptions {
+  formatters?: Record<string, MessageFormatterFunction>;
+  localeMatcher?: 'best fit' | 'lookup';
+  ...
+}
+
+type MessageFormatterFunction = (
+  locales: string[],
+  options: Record<string, unknown>,
+  ...args: MessageValue[]
+) => MessageValue
 ```
 
 For formatting a message, two methods are provided: `format()` and `getMessage()`.
