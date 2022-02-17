@@ -74,12 +74,6 @@ interface MessageFormat {
     resource: MessageResource | string
   ): MessageFormat;
 
-  format(
-    msgPath: string | string[],
-    values?: Record<string, unknown>,
-    onError?: (error: Error, value: MessageValue) => void
-  ): string;
-
   getMessage(
     msgPath: string | string[],
     values?: Record<string, unknown>,
@@ -132,12 +126,11 @@ type MessageFormatterFunction = (
 ) => MessageValue
 ```
 
-#### format() and getMessage()
+#### getMessage()
 
-For formatting a message, two methods are provided: `format()` and `getMessage()`.
-The first of these will always return a simple string,
-while the latter returns a `ResolvedMessage` object or `undefined` if the message was not found.
-These methods have the following arguments:
+For formatting a message, the `getMessage()` method is provided,
+returning a `ResolvedMessage` object or `undefined` if the message was not found.
+This method has the following arguments:
 
 - `msgPath` identifies the message from those available in the current resource.
 - `values` are to lookup variable references used in the `MessageData`.
@@ -148,8 +141,11 @@ These methods have the following arguments:
 
 ### MessageValue
 
-`ResolvedMessage` is intended to provide a building block for the localization of messages
-in contexts where its representation as a plain string would not be sufficient.
+`ResolvedMessage` is intended to provide a building block for the localization of messages anywhere,
+including contexts where its representation as a plain string would not be sufficient.
+`ResolvedMessage` extends a base interface `MessageValue`,
+with its `value` property providing an iterator of other `MessageValue`s.
+
 The `source` of a `MessageValue` provides an opaque identifier for the value,
 such as `"$foo"` for a variable.
 The `meta` of a `MessageValue` is a map of resolved metadata for the value in question.
