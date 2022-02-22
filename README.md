@@ -34,72 +34,48 @@ The MF2 specification is still being developed by the working group.
 The API below is based upon one proposal under consideration,
 but should not be considered representative of a consensus among the working group.
 In particular, the API shapes of
-`MessageFormatOptions`, `MessageData`, `MessageResourceData`, and `ResolvedMessageFormatOptions`
+`MessageFormatOptions`, `MessageData`, `MessageResource`, and `ResolvedMessageFormatOptions`
 will depend upon the data model chosen by the working group.
 
-### MessageData and MessageResourceData
+This proposal introduces one new primordial to ECMAScript, `Intl.MessageFormat`.
+The other `interface` descriptions below are intended to represent plain objects.
 
-The `MessageData` and `MessageResourceData` interfaces will be defined by
+### MessageData and MessageResource
+
+The `MessageData` and `MessageResource` interfaces will be defined by
 the MF2 data model developed by the MF2 working group.
 `MessageData` contains a parsed representation of a single message for a particular locale.
-`MessageResourceData` containts a potentially hierarchical collection of `MessageData` objects.
-
-```ts
-interface MessageData {}
-
-interface MessageResourceData {}
-```
-
-### MessageResource
 
 A `MessageResource` is a group of related messages for a single locale.
 Messages can be organized in a flat structure, or in hierarchy, using paths.
 Conceptually, it is similar to a file containing a set of messages,
 but there are no constrains implied on the underlying implementation.
 
-A `MessageResource` instance may be constructed either from a string containing
-the MF2 syntax representation of a message resource,
-or from an otherwise constructed `MessageResourceData` object.
-
 ```ts
-interface MessageResource {
-  static from(source: string): MessageResource;
+interface MessageData {}
 
-  new (data: MessageResourceData): MessageResource;
-
-  // Not directly used by formatting
-  data: MessageResourceData;
-
-  id: string;
-
-  getMessage(path: string[]): MessageData | undefined;
-}
+interface MessageResource {}
 ```
 
 ### MessageFormat
 
 The `Intl.MessageFormat` constructor creates `MessageFormat` instances for a given locale,
-`MessageFormatOptions` and an optional set of `MessageResource`s.
+`MessageFormatOptions` and a `MessageResource`.
 The remaining operations are defined on `MessageFormat` instances.
+
+If a string is used as the `resource` argument,
+it will be parsed as a MF2 syntax representation of a message resource.
 
 ```ts
 interface MessageFormat {
   new (
     locales: string | string[],
-    options?: MessageFormatOptions,
-    ...resources: MessageResource[]
+    options: MessageFormatOptions | null,
+    resource: MessageResource | string
   ): MessageFormat;
 
-  addResource(resource: MessageResource);
-
-  format(
-    msgPath: string | string[] | { resId: string; path: string[] },
-    values?: Record<string, unknown>,
-    onError?: (error: Error, value: MessageValue) => void
-  ): string;
-
   getMessage(
-    msgPath: string | string[] | { resId: string; path: string[] },
+    msgPath: string | string[],
     values?: Record<string, unknown>,
     onError?: (error: Error, value: MessageValue) => void
   ): ResolvedMessage | undefined;
@@ -136,6 +112,13 @@ interface MessageFormatOptions {
   ...
 }
 
+interface ResolvedMessageFormatOptions {
+  locales: string[],
+  localeMatcher: 'best fit' | 'lookup';
+  resource: MessageResource;
+  ...
+}
+
 type MessageFormatterFunction = (
   locales: string[],
   options: Record<string, unknown>,
@@ -143,16 +126,13 @@ type MessageFormatterFunction = (
 ) => MessageValue
 ```
 
-#### format() and getMessage()
+#### getMessage()
 
-For formatting a message, two methods are provided: `format()` and `getMessage()`.
-The first of these will always return a simple string,
-while the latter returns a `ResolvedMessage` object or `undefined` if the message was not found.
-These methods have the following arguments:
+For formatting a message, the `getMessage()` method is provided,
+returning a `ResolvedMessage` object or `undefined` if the message was not found.
+This method has the following arguments:
 
-- `msgPath` identifies the message from those available in the current resources.
-  If all added resources share the same `id` value,
-  the path may be given as a string or a string array.
+- `msgPath` identifies the message from those available in the current resource.
 - `values` are to lookup variable references used in the `MessageData`.
 - `onError` argument defines an error handler that will be called if
   message resolution or formatting fails.
@@ -161,8 +141,11 @@ These methods have the following arguments:
 
 ### MessageValue
 
-`ResolvedMessage` is intended to provide a building block for the localization of messages
-in contexts where its representation as a plain string would not be sufficient.
+`ResolvedMessage` is intended to provide a building block for the localization of messages anywhere,
+including contexts where its representation as a plain string would not be sufficient.
+`ResolvedMessage` extends a base interface `MessageValue`,
+with its `value` property providing an iterator of other `MessageValue`s.
+
 The `source` of a `MessageValue` provides an opaque identifier for the value,
 such as `"$foo"` for a variable.
 The `meta` of a `MessageValue` is a map of resolved metadata for the value in question.
