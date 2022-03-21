@@ -69,9 +69,9 @@ it will be parsed as a MF2 syntax representation of a message resource.
 ```ts
 interface MessageFormat {
   new (
-    locales: string | string[],
-    options: MessageFormatOptions | null,
-    resource: MessageResource | string
+    resource: MessageResource | string,
+    locales?: string | string[],
+    options?: MessageFormatOptions
   ): MessageFormat;
 
   getMessage(
