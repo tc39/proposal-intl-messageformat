@@ -74,7 +74,7 @@ interface MessageFormat {
     options?: MessageFormatOptions
   ): MessageFormat;
 
-  getMessage(
+  resolveMessage(
     msgPath: string | string[],
     values?: Record<string, unknown>,
     onError?: (error: Error, value: MessageValue) => void
@@ -126,9 +126,9 @@ type MessageFormatterFunction = (
 ) => MessageValue
 ```
 
-#### getMessage()
+#### resolveMessage()
 
-For formatting a message, the `getMessage()` method is provided,
+For formatting a message, the `resolveMessage()` method is provided,
 returning a `ResolvedMessage` object or `undefined` if the message was not found.
 This method has the following arguments:
 
