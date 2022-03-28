@@ -2,31 +2,68 @@
 
 ## Status
 
-Champions: Eemeli Aro (Mozilla), Daniel Minor (Mozilla)
+Champions: Eemeli Aro (Mozilla/OpenJS Foundation), Daniel Minor (Mozilla)
 
 ### Stage: 0
 
 ## Motivation
 
-Intl.MessageFormat will build upon the
-[MessageFormat 2.0](https://github.com/unicode-org/message-format-wg/) (hereafter MF2)
-specification currently under development.
-It will allow the use of MF2 resources to localize web sites,
-enabling localization of the web using industry standard tooling and processes.
-This should in turn make it easier to localize the web,
-increasing the openness and accessibility of the web for speakers of languages
-other than the handful of languages for which localization is typically done.
+This proposal aims to make it easier to localize the web,
+increasing the openness and accessibility of the web for speakers of all languages.
+Currently, localization relies on a collection of mostly proprietary message formatting specifications
+that are limited in their features and/or challenging for translators to work with.
+Furthermore, localization often relies on parsing these custom formats
+during the runtime or rendering of an application.
 
-It is likely that eventually browsers themselves will be localized using MF2.
-This is already planned for Firefox.
-If this happens,
-it will make sense to expose the MF2 implementation already present in the browser to the web,
-rather than relying upon userland libraries.
+To help with this, we introduce `Intl.MessageFormat` as a native parser and formatter for [MessageFormat 2.0].
+MF2 is a specification currently being developed under the Unicode Consortium, with wide industry support.
+This will allow for using MF2 resources to localize web sites,
+enabling the localization of the web using industry standard tooling and processes.
+
+In addition to a syntax that is designed to be accessible by both developers and translators,
+MF2 defines a message data model that may be used to represent messages defined in any existing syntax.
+This enables `Intl.MessageFormat` to be used within existing systems and workflows,
+providing a shared message formatting runtime for all users.
+
+[messageformat 2.0]: https://github.com/unicode-org/message-format-wg/
 
 ## Use cases
 
-- The primary use case is the retrieval of localized text ("a message")
-  given a message identifier and a previously specified locale.
+The primary use case is the retrieval and resolution of localized text (i.e. a "message")
+given a message resource, the locale and other options, a message identifier,
+and optionally a set of runtime values.
+
+Put together, this allows for any message ranging from the simplest to the most complex
+to be defined by a developer, translated to any number of locales, and displayed to a user.
+
+For instance, consider a relatively simple message such as
+> You have 3 new notifications
+
+In practice, this would need to account for any number of notifications,
+and the plural rules of the current locale.
+In a message resource, this could be defined using syntax such as:
+
+```ini
+# Note! MF2 syntax is still under development; this is likely to change
+new_notifications [$count] =
+  [0]   You have no new notifications
+  [one] You have one new notification
+  [_]   You have {$count} new notifications
+```
+
+Some parts of the full message are explicitly repeated for each case,
+as this makes it significantly easier for translators to work with the message.
+
+In code, with the API proposed below, this would be used like this:
+
+```js
+const resource = ... // string source as above
+const mf = new Intl.MessageFormat(resource, ['en']);
+const msg = mf.resolveMessage('new_notifications', { count: 1 });
+msg.toString(); // 'You have one new notification'
+```
+
+More complex use cases and usage patterns are described within the API description.
 
 ## API Description
 
