@@ -4,7 +4,7 @@
 
 Champions: Eemeli Aro (Mozilla/OpenJS Foundation), Daniel Minor (Mozilla)
 
-### Stage: 0
+### Stage: 1
 
 ## Motivation
 
