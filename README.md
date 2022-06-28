@@ -44,11 +44,13 @@ and the plural rules of the current locale.
 In a message resource, this could be defined using syntax such as:
 
 ```ini
-# Note! MF2 syntax is still under development; this is likely to change
-new_notifications [$count] =
-  [0]   You have no new notifications
-  [one] You have one new notification
-  [_]   You have {$count} new notifications
+# Note! MF2 syntax is still under development; this may still change
+
+new_notifications =
+  match {$count}
+  when 0   {You have no new notifications}
+  when one {You have one new notification}
+  when *   {You have {$count} new notifications}
 ```
 
 Some parts of the full message are explicitly repeated for each case,
@@ -198,7 +200,7 @@ may be used in the `values` argument as partially formatted values.
 ```ts
 interface LocaleContext {
   locales: string[];
-  localeMatcher: "best fit" | "lookup" | undefined;
+  localeMatcher: 'best fit' | 'lookup' | undefined;
 }
 
 interface MessageValue {
@@ -211,12 +213,12 @@ interface MessageValue {
 }
 
 interface MessageLiteral extends MessageValue {
-  type: "literal";
+  type: 'literal';
   value: string;
 }
 
 interface MessageNumber extends MessageValue {
-  type: "number";
+  type: 'number';
   value: number | bigint;
   options?: Intl.NumberFormatOptions & Intl.PluralRulesOptions;
   getPluralRule(): Intl.LDMLPluralRule;
@@ -224,19 +226,19 @@ interface MessageNumber extends MessageValue {
 }
 
 interface MessageDateTime extends MessageValue {
-  type: "datetime";
+  type: 'datetime';
   value: Date;
   options?: Intl.DateTimeFormatOptions;
   toParts(): Intl.DateTimeFormatPart[];
 }
 
 interface MessageFallback extends MessageValue {
-  type: "fallback";
+  type: 'fallback';
   value: undefined;
 }
 
 interface ResolvedMessage extends MessageValue {
-  type: "message";
+  type: 'message';
   value: Iterable<MessageValue>;
 }
 ```
