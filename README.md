@@ -64,13 +64,13 @@ In code, with the API proposed below, this would be used like this:
 ```js
 // A single message
 const mf = new Intl.MessageFormat('{Hello!}', ['en']);
-const greet = mf.resolve();
+const greet = mf.resolveMessage();
 greet.toString(); // 'Hello!'
 
 // A full message resource
 const source = ... // string source of resource as above
 const res = Intl.MessageFormat.parseResource(source, ['en']);
-const notifications = res.get('new_notifications').resolve({ count: 1 });
+const notifications = res.get('new_notifications').resolveMessage({ count: 1 });
 notifications.toString(); // 'You have one new notification'
 ```
 
@@ -136,7 +136,7 @@ interface MessageFormat {
     options?: MessageFormatOptions
   ): MessageFormat;
 
-  resolve(
+  resolveMessage(
     values?: Record<string, unknown>,
     onError?: (error: Error, value: MessageValue) => void
   ): ResolvedMessage;
@@ -187,9 +187,9 @@ type MessageFormatterFunction = (
 ) => MessageValue
 ```
 
-#### resolve()
+#### resolveMessage()
 
-For formatting a message, the `resolve()` method is provided,
+For formatting a message, the `resolveMessage()` method is provided,
 returning a `ResolvedMessage` object.
 This method has the following arguments:
 
