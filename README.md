@@ -15,9 +15,10 @@ that are limited in their features and/or challenging for translators to work wi
 Furthermore, localization often relies on parsing these custom formats
 during the runtime or rendering of an application.
 
-To help with this, we introduce `Intl.MessageFormat` as a native parser and formatter for [MessageFormat 2.0].
+To help with this, we introduce
+`Intl.MessageFormat` as a native parser and formatter for [MessageFormat 2.0] (aka "MF2") messages and resources.
 MF2 is a specification currently being developed under the Unicode Consortium, with wide industry support.
-This will allow for using MF2 resources to localize web sites,
+This will allow for using MF2 messages and resources to localize web sites,
 enabling the localization of the web using industry standard tooling and processes.
 
 In addition to a syntax that is designed to be accessible by both developers and translators,
@@ -46,6 +47,8 @@ In a message resource, this could be defined using syntax such as:
 ```ini
 # Note! MF2 syntax is still under development; this may still change
 
+greeting = {Hello!}
+
 new_notifications =
   match {$count}
   when 0   {You have no new notifications}
@@ -59,10 +62,16 @@ as this makes it significantly easier for translators to work with the message.
 In code, with the API proposed below, this would be used like this:
 
 ```js
-const resource = ... // string source as above
-const mf = new Intl.MessageFormat(resource, ['en']);
-const msg = mf.resolveMessage('new_notifications', { count: 1 });
-msg.toString(); // 'You have one new notification'
+// A single message
+const mf = new Intl.MessageFormat('{Hello!}', ['en']);
+const greet = mf.resolveMessage();
+greet.toString(); // 'Hello!'
+
+// A full message resource
+const source = ... // string source of resource as above
+const res = Intl.MessageFormat.parseResource(source, ['en']);
+const notifications = res.get('new_notifications').resolveMessage({ count: 1 });
+notifications.toString(); // 'You have one new notification'
 ```
 
 More complex use cases and usage patterns are described within the API description.
@@ -79,45 +88,58 @@ will depend upon the data model chosen by the working group.
 This proposal introduces one new primordial to ECMAScript, `Intl.MessageFormat`.
 The other `interface` descriptions below are intended to represent plain objects.
 
-### MessageData and MessageResource
+### MessageData
 
-The `MessageData` and `MessageResource` interfaces will be defined by
+The `MessageData` interface will be defined by
 the MF2 data model developed by the MF2 working group.
-`MessageData` contains a parsed representation of a single message for a particular locale.
+It contains a parsed representation of a single message for a particular locale.
 
-A `MessageResource` is a group of related messages for a single locale.
+```ts
+interface MessageData {}
+```
+
+### MessageResource
+
+A `MessageResource` is a plain Object representing a collection of related messages for a single locale.
 Messages can be organized in a flat structure, or in hierarchy, using paths.
 Conceptually, it is similar to a file containing a set of messages,
 but there are no constrains implied on the underlying implementation.
 
 ```ts
-interface MessageData {}
-
-interface MessageResource {}
+type MessageResource = Map<string, MessageFormat | MessageResource>
 ```
 
 ### MessageFormat
 
 The `Intl.MessageFormat` constructor creates `MessageFormat` instances for a given locale,
-`MessageFormatOptions` and a `MessageResource`.
-The remaining operations are defined on `MessageFormat` instances.
+`MessageFormatOptions` and a `MessageData` structure.
+If a string is used as the `source` argument,
+it will be parsed as a MF2 syntax representation of a message.
 
-If a string is used as the `resource` argument,
-it will be parsed as a MF2 syntax representation of a message resource.
+The static method `Intl.MessageFormat.parseResource()` parses a string representation of an MF2 resource,
+constructing a Map with a corresponding structure of `MessageFormat` instances for each of the resource's messages.
+Its `locales` and `options` arguments are used to construct each such instance.
+
+The remaining operations are defined on `MessageFormat` instances.
 
 ```ts
 interface MessageFormat {
+  static parseResource(
+    resource: string,
+    locales?: string | string[],
+    options?: MessageFormatOptions
+  ): MessageResource;
+
   new (
-    resource: MessageResource | string,
+    source: MessageData | string,
     locales?: string | string[],
     options?: MessageFormatOptions
   ): MessageFormat;
 
   resolveMessage(
-    msgPath: string | string[],
     values?: Record<string, unknown>,
     onError?: (error: Error, value: MessageValue) => void
-  ): ResolvedMessage | undefined;
+  ): ResolvedMessage;
 
   resolvedOptions(): ResolvedMessageFormatOptions;
 }
@@ -168,10 +190,9 @@ type MessageFormatterFunction = (
 #### resolveMessage()
 
 For formatting a message, the `resolveMessage()` method is provided,
-returning a `ResolvedMessage` object or `undefined` if the message was not found.
+returning a `ResolvedMessage` object.
 This method has the following arguments:
 
-- `msgPath` identifies the message from those available in the current resource.
 - `values` are to lookup variable references used in the `MessageData`.
 - `onError` argument defines an error handler that will be called if
   message resolution or formatting fails.
