@@ -46,8 +46,8 @@ contributors: Eemeli Aro
         1. Let _requestedLocales_ be ? CanonicalizeLocaleList(_locales_).
         1. Set _options_ to ? GetOptionsObject(_options_).
         1. Let _matcher_ be ? GetOption(_options_, *"localeMatcher"*, ~string~, &laquo; *"lookup"*, *"best fit"* &raquo;, *"best fit"*).
-        1. Let _requestedRuntime_ be ? Get(_options_, *"runtime"*).
-        1. Let _runtime_ be ? GetMessageRuntime(_requestedRuntime_).
+        1. Let _userFunctions_ be ? Get(_options_, *"functions"*).
+        1. Let _runtime_ be ? GetMessageRuntime(_userFunctions_).
         1. Set _messageFormat_.[[MessageData]] to _msgData_.
         1. Set _messageFormat_.[[RequestedLocales]] to _requestedLocales_.
         1. Set _messageFormat_.[[LocaleMatcher]] to _matcher_.
@@ -211,7 +211,7 @@ contributors: Eemeli Aro
     <emu-clause id="sec-getmessageruntime" type="abstract operation">
       <h1>
         GetMessageRuntime (
-          _requestedRuntime_: an Object or undefined,
+          _userFunctions_: an Object or undefined,
         )
       </h1>
       <dl class="header">
