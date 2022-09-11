@@ -16,9 +16,9 @@ Furthermore, localization often relies on parsing these custom formats
 during the runtime or rendering of an application.
 
 To help with this, we introduce
-`Intl.MessageFormat` as a native parser and formatter for [MessageFormat 2.0] (aka "MF2") messages and resources.
+`Intl.MessageFormat` as a native parser and formatter for [MessageFormat 2.0] (aka "MF2") messages.
 MF2 is a specification currently being developed under the Unicode Consortium, with wide industry support.
-This will allow for using MF2 messages and resources to localize web sites,
+This will allow for using MF2 messages to localize web sites,
 enabling the localization of the web using industry standard tooling and processes.
 
 In addition to a syntax that is designed to be accessible by both developers and translators,
@@ -31,29 +31,29 @@ providing a shared message formatting runtime for all users.
 ## Use cases
 
 The primary use case is the retrieval and resolution of localized text (i.e. a "message")
-given a message resource, the locale and other options, a message identifier,
+given a message source text, the locale and other options, a message identifier,
 and optionally a set of runtime values.
 
 Put together, this allows for any message ranging from the simplest to the most complex
 to be defined by a developer, translated to any number of locales, and displayed to a user.
 
 For instance, consider a relatively simple message such as
+
 > You have 3 new notifications
 
 In practice, this would need to account for any number of notifications,
 and the plural rules of the current locale.
-In a message resource, this could be defined using syntax such as:
+Using [MF2 syntax], this could be defined as:
+
+[mf2 syntax]: https://github.com/unicode-org/message-format-wg/blob/develop/spec/syntax.md
 
 ```ini
 # Note! MF2 syntax is still under development; this may still change
 
-greeting = {Hello!}
-
-new_notifications =
-  match {$count}
-  when 0   {You have no new notifications}
-  when one {You have one new notification}
-  when *   {You have {$count} new notifications}
+match {$count}
+when 0   {You have no new notifications}
+when one {You have one new notification}
+when *   {You have {$count} new notifications}
 ```
 
 Some parts of the full message are explicitly repeated for each case,
@@ -62,16 +62,25 @@ as this makes it significantly easier for translators to work with the message.
 In code, with the API proposed below, this would be used like this:
 
 ```js
-// A single message
-const mf = new Intl.MessageFormat('{Hello!}', ['en']);
+const source = ... // string source of the message as above
+const mf = new Intl.MessageFormat(source, ['en']);
+const notifications = mf.resolveMessage({ count: 1 });
+notifications.toString(); // 'You have one new notification'
+```
+
+As a majority of messages do not require multiple variants,
+those are of course also supported by the proposed API:
+
+```js
+// A plain message
+const mf1 = new Intl.MessageFormat('{Hello!}', ['en']);
 const greet = mf.resolveMessage();
 greet.toString(); // 'Hello!'
 
-// A full message resource
-const source = ... // string source of resource as above
-const res = Intl.MessageFormat.parseResource(source, ['en']);
-const notifications = res.get('new_notifications').resolveMessage({ count: 1 });
-notifications.toString(); // 'You have one new notification'
+// A parametric message
+const mf2 = new Intl.MessageFormat('{Hello {$place}!}', ['en']);
+const greet = mf.resolveMessage({ place: 'world' });
+greet.toString(); // 'Hello world!'
 ```
 
 More complex use cases and usage patterns are described within the API description.
@@ -82,7 +91,7 @@ The MF2 specification is still being developed by the working group.
 The API below is based upon one proposal under consideration,
 but should not be considered representative of a consensus among the working group.
 In particular, the API shapes of
-`MessageFormatOptions`, `MessageData`, `MessageResource`, and `ResolvedMessageFormatOptions`
+`MessageFormatOptions`, `MessageData`, and `ResolvedMessageFormatOptions`
 will depend upon the data model chosen by the working group.
 
 This proposal introduces one new primordial to ECMAScript, `Intl.MessageFormat`.
@@ -98,17 +107,6 @@ It contains a parsed representation of a single message for a particular locale.
 interface MessageData {}
 ```
 
-### MessageResource
-
-A `MessageResource` is a plain Object representing a collection of related messages for a single locale.
-Messages can be organized in a flat structure, or in hierarchy, using paths.
-Conceptually, it is similar to a file containing a set of messages,
-but there are no constrains implied on the underlying implementation.
-
-```ts
-type MessageResource = Map<string, MessageFormat | MessageResource>
-```
-
 ### MessageFormat
 
 The `Intl.MessageFormat` constructor creates `MessageFormat` instances for a given locale,
@@ -116,20 +114,8 @@ The `Intl.MessageFormat` constructor creates `MessageFormat` instances for a giv
 If a string is used as the `source` argument,
 it will be parsed as a MF2 syntax representation of a message.
 
-The static method `Intl.MessageFormat.parseResource()` parses a string representation of an MF2 resource,
-constructing a Map with a corresponding structure of `MessageFormat` instances for each of the resource's messages.
-Its `locales` and `options` arguments are used to construct each such instance.
-
-The remaining operations are defined on `MessageFormat` instances.
-
 ```ts
 interface MessageFormat {
-  static parseResource(
-    resource: string,
-    locales?: string | string[],
-    options?: MessageFormatOptions
-  ): MessageResource;
-
   new (
     source: MessageData | string,
     locales?: string | string[],
@@ -176,7 +162,7 @@ interface MessageFormatOptions {
 interface ResolvedMessageFormatOptions {
   locales: string[],
   localeMatcher: 'best fit' | 'lookup';
-  resource: MessageResource;
+  message: MessageData;
   ...
 }
 
