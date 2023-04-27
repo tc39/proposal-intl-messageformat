@@ -52,7 +52,7 @@ Using [MF2 syntax], this could be defined as:
 
 match {$count}
 when 0   {You have no new notifications}
-when one {You have one new notification}
+when 1   {You have one new notification}
 when *   {You have {$count} new notifications}
 ```
 
