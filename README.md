@@ -51,9 +51,9 @@ Using [MF2 syntax], this could be defined as:
 # Note! MF2 syntax is still under development; this may still change
 
 match {$count}
-when 0   {You have no new notifications}
-when 1   {You have one new notification}
-when *   {You have {$count} new notifications}
+when 0 {You have no new notifications}
+when 1 {You have one new notification}
+when * {You have {$count} new notifications}
 ```
 
 Some parts of the full message are explicitly repeated for each case,
