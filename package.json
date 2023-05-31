@@ -15,5 +15,9 @@
   "license": "MIT",
   "devDependencies": {
     "ecmarkup": "^8.1.0"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "trailingComma": "none"
   }
 }
