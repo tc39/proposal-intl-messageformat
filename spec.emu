@@ -4,20 +4,242 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/github.min.css">
 <script src="./spec.js"></script>
 <pre class="metadata">
-title: Proposal Title Goes Here
-stage: -1
-contributors: Your Name(s) Here
+title: Intl.MessageFormat
+stage: 1
+contributors: Eemeli Aro
 </pre>
 
-<emu-clause id="sec-demo-clause">
-  <h1>This is an emu-clause</h1>
-  <p>This is an algorithm:</p>
-  <emu-alg>
-    1. Let _proposal_ be *undefined*.
-    1. If IsAccepted(_proposal_),
-      1. Let _stage_ be *0*.
-    1. Else,
-      1. Let _stage_ be *-1*.
-    1. Return ? ToString(_proposal_).
-  </emu-alg>
+<emu-clause id="messageformat-objects">
+  <h1>MessageFormat Objects</h1>
+
+  <emu-clause id="sec-intl-messageformat-constructor">
+    <h1>The Intl.MessageFormat Constructor</h1>
+
+    <p>
+      The MessageFormat constructor is the <dfn>%MessageFormat%</dfn> intrinsic object and a standard built-in property of the Intl object. Behaviour common to all service constructor properties of the Intl object is specified in <a href="https://tc39.es/ecma402/#sec-internal-slots">9.1</a>.
+    </p>
+
+    <emu-clause id="sec-intl.messageformat">
+      <h1>Intl.MessageFormat ( _source_, [ _locales_ [ , _options_ ] ] )</h1>
+
+      <p>
+        When the `Intl.MessageFormat` function is called with arguments _source_, _locales_, and _options_, the following steps are taken:
+      </p>
+
+      <emu-alg>
+        1. If NewTarget is *undefined*, throw a *TypeError* exception.
+        1. Let _messageFormat_ be ? OrdinaryCreateFromConstructor(NewTarget, %MessageFormat.prototype%, &laquo; [[InitializedMessageFormat]], [[LocaleMatcher]], [[MessageData]], [[RequestedLocales]], [[Runtime]] &raquo;).
+        1. Return ? InitializeMessageFormat(_messageFormat_, _source_, _locales_, _options_).
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id="sec-initializemessageformat" aoid="InitializeMessageFormat">
+      <h1>InitializeMessageFormat ( _messageFormat_, _source_, _locales_, _options_ )</h1>
+
+      <p>
+        The abstract operation InitializeMessageFormat accepts the arguments _messageFormat_ (which must be an object), _source_, _locales_, and _options_. It initializes _messageFormat_ as a MessageFormat object. The following steps are taken:
+      </p>
+
+      <emu-alg>
+        1. If _source_ is *undefined*, throw a *TypeError* exception.
+        1. Let _msgData_ be ? GetMessageData(_source_).
+        1. Let _requestedLocales_ be ? CanonicalizeLocaleList(_locales_).
+        1. Set _options_ to ? GetOptionsObject(_options_).
+        1. Let _matcher_ be ? GetOption(_options_, *"localeMatcher"*, ~string~, &laquo; *"lookup"*, *"best fit"* &raquo;, *"best fit"*).
+        1. Let _requestedRuntime_ be ? Get(_options_, *"runtime"*).
+        1. Let _runtime_ be ? GetMessageRuntime(_requestedRuntime_).
+        1. Set _messageFormat_.[[MessageData]] to _msgData_.
+        1. Set _messageFormat_.[[RequestedLocales]] to _requestedLocales_.
+        1. Set _messageFormat_.[[LocaleMatcher]] to _matcher_.
+        1. Set _messageFormat_.[[Runtime]] to _runtime_.
+        1. Return _messageFormat_.
+      </emu-alg>
+    </emu-clause>
+  </emu-clause>
+
+  <emu-clause id="sec-properties-of-intl-messageformat-constructor">
+    <h1>Properties of the Intl.MessageFormat Constructor</h1>
+
+    <p>
+      The Intl.MessageFormat constructor has the following properties:
+    </p>
+
+    <emu-clause id="sec-intl.messageformat.prototype">
+      <h1>Intl.MessageFormat.prototype</h1>
+
+      <p>
+        The value of `Intl.MessageFormat.prototype` is %MessageFormat.prototype%.
+      </p>
+      <p>
+        This property has the attributes { [[Writable]]: *false*, [[Enumerable]]: *false*, [[Configurable]]: *false* }.
+      </p>
+    </emu-clause>
+
+    <emu-clause id="sec-intl.messageformat-internal-slots">
+      <h1>Internal slots</h1>
+
+      <emu-note>
+        Unlike other Intl formatters, MessageFormat does not necessarily have a single list of locales that it supports, as it calls on other formatters as necessary.
+      </emu-note>
+    </emu-clause>
+  </emu-clause>
+
+  <emu-clause id="sec-properties-of-intl-messageformat-prototype-object">
+    <h1>Properties of the Intl.MessageFormat Prototype Object</h1>
+
+    <p>
+      The Intl.MessageFormat prototype object is itself an ordinary object. <dfn>%MessageFormat.prototype%</dfn> is not an Intl.MessageFormat instance and does not have an [[InitializedMessageFormat]] internal slot or any of the other internal slots of Intl.MessageFormat instance objects.
+    </p>
+
+    <emu-clause id="sec-intl.messageformat.prototype.constructor">
+      <h1>Intl.MessageFormat.prototype.constructor</h1>
+
+      <p>
+        The initial value of `Intl.MessageFormat.prototype.constructor` is %MessageFormat%.
+      </p>
+    </emu-clause>
+
+    <emu-clause id="sec-intl.messageformat.prototype-tostringtag">
+      <h1>Intl.MessageFormat.prototype [ @@toStringTag ]</h1>
+
+      <p>
+        The initial value of the @@toStringTag property is the String value *"Intl.MessageFormat"*.
+      </p>
+      <p>
+        This property has the attributes { [[Writable]]: *false*, [[Enumerable]]: *false*, [[Configurable]]: *true* }.
+      </p>
+    </emu-clause>
+
+    <emu-clause id="sec-intl.messageformat.prototype.select">
+      <h1>Intl.MessageFormat.prototype.resolveMessage ( [ _values_ [ , _onError_ ] ] )</h1>
+
+      <p>
+        When the `resolveMessage` method is called with optional arguments _values_ and _onError_, the following steps are taken:
+      </p>
+
+      <emu-alg>
+        1. Let _mf_ be the *this* value.
+        1. Perform ? RequireInternalSlot(_mf_, [[InitializedMessageFormat]]).
+        1. ...TODO
+        1. Return ! ResolveMessage(_mf_, _values_, _onError_).
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id="sec-intl.messageformat.prototype.resolvedoptions">
+      <h1>Intl.MessageFormat.prototype.resolvedOptions ( )</h1>
+
+      <p>
+        This function provides access to the locale and options computed during initialization of the object.
+      </p>
+
+      <emu-alg>
+        1. Let _mf_ be the *this* value.
+        1. Perform ? RequireInternalSlot(_mf_, [[InitializedMessageFormat]]).
+        1. Let _options_ be OrdinaryObjectCreate(%Object.prototype%).
+        1. For each row of <emu-xref href="#table-messageformat-resolvedoptions-properties"></emu-xref>, except the header row, in table order, do
+          1. Let _p_ be the Property value of the current row.
+          1. Let _v_ be the value of _mf_'s internal slot whose name is the Internal Slot value of the current row.
+          1. If _v_ is not *undefined*, then
+            1. Perform ! CreateDataPropertyOrThrow(_options_, _p_, _v_).
+        1. Return _options_.
+      </emu-alg>
+
+      <emu-table id="table-messageformat-resolvedoptions-properties">
+        <emu-caption>Resolved Options of MessageFormat Instances</emu-caption>
+        <table class="real-table">
+          <thead>
+            <tr>
+              <th>Internal Slot</th>
+              <th>Property</th>
+            </tr>
+          </thead>
+          <tr>
+            <td>[[RequestedLocales]]</td>
+            <td>*"locales"*</td>
+          </tr>
+          <tr>
+            <td>[[LocaleMatcher]]</td>
+            <td>*"localeMatcher"*</td>
+          </tr>
+          <tr>
+            <td>[[MessageData]]</td>
+            <td>*"message"*</td>
+          </tr>
+        </table>
+      </emu-table>
+    </emu-clause>
+  </emu-clause>
+
+  <emu-clause id="sec-properties-of-intl-messageformat-instances">
+    <h1>Properties of Intl.MessageFormat Instances</h1>
+
+    <p>
+      Intl.MessageFormat instances are ordinary objects that inherit properties from %MessageFormat.prototype%.
+    </p>
+
+    <p>
+      Intl.MessageFormat instances have an [[InitializedMessageFormat]] internal slot.
+    </p>
+
+    <p>
+      Intl.MessageFormat instances also have several internal slots that are computed by the constructor:
+    </p>
+
+    <ul>
+      <li>[[LocaleMatcher]] is one of the String values *"looup"* or *"best fit"*, identifying the locale matcher used.</li>
+      <li>[[MessageData]] is an Object ...TODO</li>
+      <li>[[RequestedLocales]] is a List of String values with the canonicalizsed language tags of the requested locales to use for message formatting.</li>
+      <li>[[Runtime]] is an Object ...TODO</li>
+    </ul>
+  </emu-clause>
+
+  <emu-clause id="sec-intl-messageformat-abstracts">
+    <h1>Abstract Operations for MessageFormat Objects</h1>
+
+    <emu-clause id="sec-getmessagedata" type="implementation-defined abstract operation">
+       <h1>
+         GetMessageData (
+           _source_: a String,
+         )
+       </h1>
+       <dl class="header">
+        <dt>description</dt>
+        <dd>It determines the message data representation corresponding to the input _source_ according to the <a href="https://github.com/unicode-org/message-format-wg/blob/main/spec/syntax.md">Unicode MessageFormat 2.0 syntax</a>.</dd>
+       </dl>
+    </emu-clause>
+
+    <emu-clause id="sec-getmessageruntime" type="abstract operation">
+      <h1>
+        GetMessageRuntime (
+          _requestedRuntime_: an Object or undefined,
+        )
+      </h1>
+      <dl class="header">
+        <dt>description</dt>
+        <dd>...TODO</dd>
+      </dl>
+
+      <emu-alg>
+        1. ...TODO
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id="sec-resolvemessage" type="abstract operation">
+      <h1>
+        ResolveMessage (
+          _mf_: an Object,
+          _values_: an Object,
+          _onError_: a Function,
+        )
+      </h1>
+      <dl class="header">
+        <dt>description</dt>
+        <dd>...TODO</dd>
+      </dl>
+
+      <emu-alg>
+        1. ...TODO
+      </emu-alg>
+    </emu-clause>
+  </emu-clause>
 </emu-clause>
