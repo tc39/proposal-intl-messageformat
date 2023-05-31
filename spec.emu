@@ -121,7 +121,7 @@ contributors: Eemeli Aro
         1. Let _mf_ be the *this* value.
         1. Perform ? RequireInternalSlot(_mf_, [[InitializedMessageFormat]]).
         1. ...TODO
-        1. Return ! ResolveMessage(_mf_, _values, _onError_).
+        1. Return ! ResolveMessage(_mf_, _values_, _onError_).
       </emu-alg>
     </emu-clause>
 
@@ -228,7 +228,7 @@ contributors: Eemeli Aro
       <h1>
         ResolveMessage (
           _mf_: an Object,
-          _values: an Object,
+          _values_: an Object,
           _onError_: a Function,
         )
       </h1>
