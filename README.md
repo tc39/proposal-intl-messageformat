@@ -90,8 +90,7 @@ More complex use cases and usage patterns are described within the API descripti
 The MF2 specification is still being developed by the working group.
 The API below is based upon one proposal under consideration,
 but should not be considered representative of a consensus among the working group.
-In particular, the API shapes of
-`MessageFormatOptions`, `MessageData`, and `ResolvedMessageFormatOptions`
+In particular, the API shape of `MessageData`
 will depend upon the data model chosen by the working group.
 
 This proposal introduces one new primordial to ECMAScript, `Intl.MessageFormat`.
@@ -133,44 +132,40 @@ interface MessageFormat {
 
 #### Constructor options and resolvedOptions()
 
-The interfaces for
-`MessageFormatOptions` and `ResolvedMessageFormatOptions`
-will depend on the final MF2 data model.
 `MessageFormatOptions` contains configuration options
 for the creation of `MessageFormat` instances.
 The `ResolvedMessageFormatOptions` object contains the options
 resolved during the construction of the `MessageFormat` instance.
 
-Custom user-defined message formatting function may defined by the `formatters` option.
+Custom user-defined message formatting and selection functions may defined by the `functions` option.
 These allow for any data types to be handled by custom functions.
-Formatting functions may be referenced within messages,
+Such functions may be referenced within messages,
 and then called with the resolved values of their arguments and options.
-At least two formatting functions are to be provided by the implementation:
+At least two functions are to be provided by the implementation:
 
 - `number`, returning a `MessageNumber`
 - `datetime`, returning a `MessageDateTime`
 
-These may be shadowed by user-defined functions defined in the formatters option.
+These may be shadowed by user-defined functions defined in the `functions` option.
 
 ```ts
 interface MessageFormatOptions {
-  formatters?: Record<string, MessageFormatterFunction>;
+  functions?: Record<string, MessageFormatFunction>;
   localeMatcher?: 'best fit' | 'lookup';
-  ...
 }
 
 interface ResolvedMessageFormatOptions {
-  locales: string[],
+  functions: Record<string, MessageFormatFunction>;
+  locales: string[];
   localeMatcher: 'best fit' | 'lookup';
   message: MessageData;
-  ...
 }
 
-type MessageFormatterFunction = (
+type MessageFormatFunction = (
   locales: string[],
   options: Record<string, unknown>,
-  ...args: MessageValue[]
-) => MessageValue
+  arg?: MessageValue
+) => MessageValue;
 ```
 
 #### resolveMessage()
