@@ -309,7 +309,14 @@ An expression may have one of three forms:
 - An operand with an annotation.
 - An annotation with no operand.
 
-The resolution of annotations using the `:` prefix is customisable
+There are three different types of supported annotations,
+distinguished by their first character:
+
+- `':'` for standalone annotations like numbers and strings,
+- `'+'` for "open" annotations that start a markup span, and
+- `'-'` for "close" annotations that end a markup span.
+
+The resolution of standalone annotations is customisable
 using the constructor's `functions` option,
 which takes `MessageFunction` function values that are applied when
 the annotation's name (without the `:`) corresponds to the `functions` key.
@@ -508,6 +515,52 @@ When a `MessageString` is used as a selector,
 the returned array may include at most one entry,
 if one of the keys was an exact string match for the value.
 
+### Message Markup
+
+In addition to standalone annotations such as `:number` and `:string`,
+MF2 messages may include expressions that indicate the start/open (`+`) and end/close (`-`) of markup spans,
+such as `+b` or `-link`.
+Unlike standalone annotations,
+the resolution of these expressions cannot be customised.
+A markup element always resolves as:
+
+```ts
+interface MessageMarkup {
+  type: 'open' | 'close';
+  locale: string;
+  source: string;
+  name: string;
+  options: { [key: string]: unknown };
+  toParts(): [MessageMarkupPart];
+  toString(): '';
+  valueOf?: () => unknown;
+}
+
+interface MessageMarkupPart {
+  type: 'open' | 'close';
+  source: string;
+  name: string;
+  value?: unknown;
+  options: { [key: string]: unknown };
+}
+```
+
+A markup expression cannot be used as a selector.
+When formatted to a string, a markup expression is formatted as an empty string.
+The `name` of the `MessageMarkup` matches the name of the annotation,
+without the `+` or `-` prefix.
+If the expression includes an input argument,
+the `valueOf()` method is defined and returns that value,
+and the `source` matches that of the input argument.
+Otherwise, the `source` matches the `name` of the annotation,
+prefixed with the appropriate `+` or `-` character.
+
+When `MessageMarkup` is formatted to parts,
+the `type`, `name` and `source` of the `MessageMarkupPart` match those of the `MessageMarkup`.
+For each of the `value` and `options` values,
+if the corresponding value is an object with a `valueOf()` method that does not return the object itself,
+the returned value is used.
+
 ### Fallback Values
 
 It's possible for a `MessageFunction` call to throw an error,
@@ -536,7 +589,7 @@ interface MessageFallbackPart {
 ```
 
 This representation is also used when resolving MF2 expressions
-that include "markup", "reserved" or "private-use" annotations.
+that include "reserved" or "private-use" annotations.
 
 The `source` of the `MessageFallback` corresponds to the `source` of the `MessageValue`.
 When `MessageFallback` is formatted to a string,
