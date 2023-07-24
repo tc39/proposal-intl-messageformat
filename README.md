@@ -176,7 +176,7 @@ This method has the following optional arguments:
   a warning will be issued for each error and a [fallback representation] used for the corresponding message part.
 
 To determine the value `res` returned by the `format()` method,
-the message is first resolved to a pattern (a list of MessageValue).
+the message is first resolved to a list of MessageValue instances.
 Starting with an empty string `res`, for each MessageValue `mv`:
 
 1. Let `strval` be the result of calling `mv.toString()`.
@@ -197,7 +197,7 @@ This method has the following optional arguments:
   a warning will be issued for each error and a [fallback representation] used for the corresponding message part.
 
 To determine the value `res` returned by the `formatToParts()` method,
-the message is first resolved to a pattern (a list of MessageValue).
+the message is first resolved to a list of MessageValue instances.
 Starting with an empty array `res`, for each MessageValue `mv`:
 
 1. Let `parts` be the result of calling `mv.toParts()`.
@@ -274,7 +274,7 @@ interface MessageLiteralPart {
 }
 ```
 
-For `MessageLiteral`, the value returned by `tostring()` and the `toParts()` `value`
+For `MessageLiteral`, the value returned by `toString()` and the `toParts()` `value`
 correspond to the text source.
 Its `locale` is always the same as the message's base locale.
 
@@ -315,7 +315,8 @@ when used as an input or as an option value.
 Each function will need to parse these separately from their string representations.
 
 If a function is locale-dependent,
-it should accept `locale` as an option overriding the message's base locale.
+it should accept an extra option key called `locale`
+which resolves to a string overriding the message's base locale.
 This option value should always be parsed as an array or
 (if a single string) a comma-delimited list of BCP 47 locale identifiers.
 
