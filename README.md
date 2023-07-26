@@ -169,7 +169,7 @@ interface ResolvedMessageFormatOptions {
 As with other `Intl` formatters, `format()` returns a string.
 This method has the following optional arguments:
 
-- `values` provide variable values for the message's variable references.
+- `values` provides variable values for the message's variable references.
 - `onError` defines an error handler that will be called if
   message resolution or formatting fails.
   If `onError` is not defined,
@@ -190,7 +190,7 @@ For formatting a message to non-string targets,
 the `formatToParts()` method is provided, returning an array of `MessagePart` objects.
 This method has the following optional arguments:
 
-- `values` provide variable values for the message's variable references.
+- `values` provides variable values for the message's variable references.
 - `onError` defines an error handler that will be called if
   message resolution or formatting fails.
   If `onError` is not defined,
@@ -236,14 +236,14 @@ they determine how the value may be used in MF2 expressions.
 
 In order to be usable as a formatted placeholder,
 the object (or its prototype chain) MUST include a `toString` method returning a string
-and a `toParts` method returning an array of `MessagePart`.
+and a `toParts` method returning an array of `MessagePart`s.
 All of the built-in implementations of this method return an array with exactly one value,
 but user-defined functions may return any number of parts, or none.
 
 In order to be usable as a variant selector,
 the object MUST include a `selectKeys` method.
-When called with an array of string keys for the message's variants,
-it MUST return an array with a subset of those keys,
+When called with an array of string keys,
+it MUST return an array whose elements are a subset of those keys,
 filtered to only matching values for the selector and sorted by preference.
 
 Within a message, the value of an expression may be assigned to a message-local variable,
@@ -281,15 +281,19 @@ Its `locale` is always the same as the message's base locale.
 #### Expressions
 
 Expressions are used as selectors and as pattern placeholders.
-Local variable declarations may assign their value to a local variable,
+A local variable declaration may assign the value of an expression to a local variable,
 allowing for the same expression to be used in multiple places
 and potentially with different roles.
 
-An expression may contain just a literal value or a variable reference as an operand,
-an operand and an annotation, or just an annotation.
+An expression may have one of three forms:
+
+- An operand (either a literal value or a variable reference).
+- An operand with an annotation.
+- An annotation with no operand.
+
 The resolution of standalone annotations is customisable
 using the constructor's `functions` option,
-which take `MessageFunction` function values that are applied when
+which takes `MessageFunction` function values that are applied when
 the annotation's name (without the `:`) corresponds to the `functions` key.
 
 ### MessageFunction
@@ -328,7 +332,7 @@ such as variable references like `{$foo}` or literal values like `{|the bar|}`.
 
 Variable references are resolved by first looking for a local variable declaration
 matching its name, then by looking in the `values` argument.
-Literal values always resolve as a string.
+Literal values always resolve to strings.
 
 As selector expressions must have an annotation or contain a variable reference
 that references a variable declaration within the same message with an annotation,
@@ -380,8 +384,8 @@ Accepts as input any of the following:
   The `value` is determined by the equivalent of calling `JSON.parse()` on the string,
   and asserting that it returns a number or a bigint.
 
-For all other inputs, no input, or on any error while determining `value`,
-resolves to a fallback value.
+Returns a fallback value if invoked without such an input,
+or if an error occurs while determining `value`.
 
 Internally, constructs a `locales` array of strings as used by
 the Intl.NumberFormat and Intl.PluralRules constructors.
