@@ -274,7 +274,8 @@ interface MessageLiteralPart {
 }
 ```
 
-For `MessageLiteral`, the value returned by `toString()` and the `toParts()` `value`
+For `MessageLiteral`, the value returned by `toString()` and
+the `value` field of the object returned by `toParts()` 
 correspond to the text source.
 Its `locale` is always the same as the message's base locale.
 
@@ -291,7 +292,7 @@ An expression may have one of three forms:
 - An operand with an annotation.
 - An annotation with no operand.
 
-The resolution of standalone annotations is customisable
+The resolution of annotations using the `:` prefix is customisable
 using the constructor's `functions` option,
 which takes `MessageFunction` function values that are applied when
 the annotation's name (without the `:`) corresponds to the `functions` key.
@@ -427,7 +428,7 @@ interface MessageNumberPart {
 }
 ```
 
-When a `MessageNumber` is used as a selector (calling `selectKeys()`),
+When a `MessageNumber` is used as a selector (calling its `selectKeys()` method),
 a key with an exact numeric match to the value will be preferred over a key matching the value's plural category
 (some of `zero`, `one`, `two`, `few`, `many`, and `other`, depending on the locale).
 
