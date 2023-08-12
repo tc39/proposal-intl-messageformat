@@ -243,14 +243,15 @@ but user-defined functions may return any number of parts, or none.
 In order to be usable as a variant selector,
 the object MUST include a `selectKeys` method.
 When called with an array of string keys,
-it MUST return an array whose elements are a subset of those keys,
-filtered to only matching values for the selector and sorted by preference.
+it MUST return an array whose elements are a subset of those keys.
+The returned keys will be considered to match the selector and be in preferential order.
 
 Within a message, the value of an expression may be assigned to a message-local variable,
 and such a variable may be used as an input argument to another expression,
 or as an option value.
-Some functions (including the default `number`) accept as input
-objects with a `valueOf` method and an `options` field in addition to `type` and `locale`.
+Some functions (including the default `number`) accept
+objects with a `valueOf` method and an `options` field
+in addition to `type` and `locale` as input.
 These MAY also be defined on the returned object.
 
 #### Literal Text
@@ -308,10 +309,18 @@ to complement or replace the default ones.
 ```ts
 type MessageFunction = (
   locales: string[],
-  options: { [key: string]: MessageValue },
-  input?: MessageValue
+  options: { [key: string]: unknown },
+  input?: unknown
 ) => MessageValue;
 ```
+
+The `input` and `options` values are constructed as follows:
+- If the value is a literal defined in the message syntax,
+  the value is its `string` value.
+- If the value is a variable referring to a local variable declaration,
+  the value is the `MessageValue` that the declaration's expression resolves to.
+- Otherwise, the value is a variable referring to an external value,
+  and its type and value are that of the external value.
 
 As function options are often set by literal values,
 and as MF2 considers all literals to be strings,
@@ -339,7 +348,8 @@ As selector expressions must have an annotation or contain a variable reference
 that references a variable declaration within the same message with an annotation,
 un-annotated expressions only need to be considered for formattable placeholders.
 
-If a placeholder expression would resolve to a number or bigint value or a Number instance,
+If a placeholder expression contains a variable reference without an annotation
+and the variable resolves to a number or bigint value or a Number instance,
 it resolves instead to the result of calling the `number` function
 with the numerical value as input and no options.
 
