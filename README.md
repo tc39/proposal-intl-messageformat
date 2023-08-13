@@ -227,6 +227,16 @@ interface MessageValue {
   toString?: () => string;
   valueOf?: () => unknown;
 }
+
+type MessagePart =
+  | { type: 'literal'; value: string }
+  | {
+      type: string;
+      source: string;
+      locale?: string;
+      parts?: Array<{ type: string; value: unknown }>;
+      value?: unknown;
+    };
 ```
 
 A `MessageValue` is an object with a string `type`, a string `locale` identifier,
@@ -240,8 +250,14 @@ and a `toParts` method returning an array of `MessagePart`s.
 All of the built-in implementations of this method return an array with exactly one value,
 but user-defined functions may return any number of parts, or none.
 
+Except for parts corresponding to literal values,
+each `MessagePart` MUST include the `type` and `source` from the `MessageValue`.
+It MAY also include a string `locale` identifier,
+an explicit `value` of any type,
+and/or its own sequence of `parts`.
+
 In order to be usable as a variant selector,
-the object MUST include a `selectKeys` method.
+the `MessageValue` object MUST include a `selectKeys` method.
 When called with an array of string keys,
 it MUST return an array whose elements are a subset of those keys.
 The returned keys will be considered to match the selector and be in preferential order.
@@ -276,7 +292,7 @@ interface MessageLiteralPart {
 ```
 
 For `MessageLiteral`, the value returned by `toString()` and
-the `value` field of the object returned by `toParts()` 
+the `value` field of the object returned by `toParts()`
 correspond to the text source.
 Its `locale` is always the same as the message's base locale.
 
@@ -315,6 +331,7 @@ type MessageFunction = (
 ```
 
 The `input` and `options` values are constructed as follows:
+
 - If the value is a literal defined in the message syntax,
   the value is its `string` value.
 - If the value is a variable referring to a local variable declaration,
@@ -371,6 +388,7 @@ interface MessageUnknownValue {
 
 interface MessageUnknownPart {
   type: 'unknown';
+  source: string;
   value: unknown;
 }
 ```
@@ -434,6 +452,7 @@ interface MessageNumber {
 interface MessageNumberPart {
   type: 'number';
   locale: string;
+  source: string;
   parts: Intl.NumberFormatPart[];
 }
 ```
@@ -480,6 +499,7 @@ interface MessageString {
 interface MessageStringPart {
   type: 'string';
   locale: string;
+  source: string;
   value: string;
 }
 ```
