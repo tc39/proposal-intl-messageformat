@@ -324,6 +324,7 @@ to complement or replace the default ones.
 
 ```ts
 type MessageFunction = (
+  source: string,
   locales: string[],
   options: { [key: string]: unknown },
   input?: unknown
