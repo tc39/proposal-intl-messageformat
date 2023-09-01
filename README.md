@@ -211,7 +211,7 @@ Starting with an empty string `res`, for each MessageValue `mv`:
 The ApplyBidiIsolation abstract operation will take as arguments
 the current bidi isolation strategy and the message and part directions.
 From these it will determine `start` and `end` as sequences of Unicode code points
-which will, if necessary, isolate parts with differing directionalities from each other.
+which will, if necessary, isolate parts from each other.
 With the default "compatibility" strategy, the result matches this TS type:
 
 ```ts
