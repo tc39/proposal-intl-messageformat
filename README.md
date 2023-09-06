@@ -520,8 +520,13 @@ if one of the keys was an exact string match for the value.
 In addition to standalone annotations such as `:number` and `:string`,
 MF2 messages may include expressions that indicate the start/open (`+`) and end/close (`-`) of markup spans,
 such as `+b` or `-link`.
+Markup expressions are not required to be paired or nest cleanly;
+within the formatter each is only considered by itself,
+and any higher-level validation is the responsibility of the caller.
+
 Unlike standalone annotations,
-the resolution of these expressions cannot be customised.
+the resolution of these expressions cannot be customised;
+they are instead included almost directly in the formatted-parts output.
 A markup element always resolves as:
 
 ```ts
