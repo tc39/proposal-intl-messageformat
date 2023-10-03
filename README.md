@@ -61,7 +61,7 @@ In code, with the API proposed below, this would be used like this:
 
 ```js
 const source = ... // string source of the message as above
-const mf = new Intl.MessageFormat(source, ['en']);
+const mf = new Intl.MessageFormat(source, 'en');
 const notifications = mf.format({ count: 1 });
 // 'You have 1 new notification'
 ```
@@ -71,11 +71,11 @@ those are of course also supported by the proposed API:
 
 ```js
 // A plain message
-const mf1 = new Intl.MessageFormat('{Hello!}', ['en']);
+const mf1 = new Intl.MessageFormat('{Hello!}', 'en');
 mf1.format(); // 'Hello!'
 
 // A parametric message, formatted to parts
-const mf2 = new Intl.MessageFormat('{Hello {$place}!}', ['en']);
+const mf2 = new Intl.MessageFormat('{Hello {$place}!}', 'en');
 const greet = mf.formatToParts({ place: 'world' });
 /* [
   { type: 'literal', value: 'Hello ' },
