@@ -6,6 +6,11 @@ Champions: Eemeli Aro (Mozilla/OpenJS Foundation), Daniel Minor (Mozilla)
 
 ### Stage: 1
 
+#### Presentations
+
+- 2022 March: [Stage 1 proposal](https://docs.google.com/presentation/d/1oThTeL_n5-HAfmJTri-i8yU2YtHUvj9AakmWiyRGPlw/edit?usp=sharing)
+- 2023 October: [Stage 1 update](https://docs.google.com/presentation/d/15lwZipk0k5pMscSBbEPpMySsnM_qd4MOo_NqmmKyS-Q/edit?usp=sharing)
+
 ## Motivation
 
 This proposal aims to make it easier to localize the web,
