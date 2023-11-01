@@ -518,16 +518,16 @@ if one of the keys was an exact string match for the value.
 ### Message Markup
 
 In addition to standalone annotations such as `:number` and `:string`,
-MF2 messages may include expressions that indicate the start/open (`+`) and end/close (`-`) of markup spans,
+MF2 messages may include placeholders that indicate the start/open (`+`) and end/close (`-`) of markup spans,
 such as `+b` or `-link`.
-Markup expressions are not required to be paired or nest cleanly;
+Markup placeholders are not required to be paired or nest cleanly;
 within the formatter each is only considered by itself,
 and any higher-level validation is the responsibility of the caller.
 
 Unlike standalone annotations,
-the resolution of these expressions cannot be customised;
+the resolution of these placeholders cannot be customised;
 they are instead included almost directly in the formatted-parts output.
-A markup element always resolves as:
+A markup placeholder always resolves as:
 
 ```ts
 interface MessageMarkup {
@@ -550,14 +550,14 @@ interface MessageMarkupPart {
 }
 ```
 
-A markup expression cannot be used as a selector.
-When formatted to a string, a markup expression is formatted as an empty string.
+A markup placeholder cannot be used as a selector.
+When formatted to a string, a markup placeholder is formatted as an empty string.
 The `name` of the `MessageMarkup` matches the name of the annotation,
 without the `+` or `-` prefix.
-If the expression includes an input argument,
+If the placeholder includes an input argument,
 the `valueOf()` method is defined and returns that value,
 and the `source` matches that of the input argument.
-Otherwise, the `source` matches the `name` of the annotation,
+Otherwise, the `source` matches the `name` of the markup placeholder,
 prefixed with the appropriate `+` or `-` character.
 
 When `MessageMarkup` is formatted to parts,
