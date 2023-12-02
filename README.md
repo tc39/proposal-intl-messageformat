@@ -53,10 +53,10 @@ Using [MF2 syntax], this could be defined as:
 [mf2 syntax]: https://github.com/unicode-org/message-format-wg/blob/develop/spec/syntax.md
 
 ```ini
-match {$count :number}
-when 0 {You have no new notifications}
-when one {You have {$count} new notification}
-when * {You have {$count} new notifications}
+.match {$count :number}
+0   {{You have no new notifications}}
+one {{You have {$count} new notification}}
+*   {{You have {$count} new notifications}}
 ```
 
 Some parts of the full message are explicitly repeated for each case,
@@ -76,11 +76,11 @@ those are of course also supported by the proposed API:
 
 ```js
 // A plain message
-const mf1 = new Intl.MessageFormat('{Hello!}', 'en');
+const mf1 = new Intl.MessageFormat('Hello!', 'en');
 mf1.format(); // 'Hello!'
 
 // A parametric message, formatted to parts
-const mf2 = new Intl.MessageFormat('{Hello {$place}!}', 'en');
+const mf2 = new Intl.MessageFormat('Hello {$place}!', 'en');
 const greet = mf.formatToParts({ place: 'world' });
 /* [
   { type: 'literal', value: 'Hello ' },
@@ -234,14 +234,15 @@ interface MessageValue {
 }
 
 type MessagePart =
-  | { type: 'literal'; value: string }
-  | {
+  | { type: 'text'; value: string }
+  | ({
       type: string;
       source: string;
       locale?: string;
-      parts?: Array<{ type: string; value: unknown }>;
-      value?: unknown;
-    };
+    } & (
+      | { value?: unknown }
+      | { parts: Array<{ type: string; value: unknown; source?: string }> }
+    ));
 ```
 
 A `MessageValue` is an object with a string `type`, a string `locale` identifier,
@@ -258,8 +259,8 @@ but user-defined functions may return any number of parts, or none.
 Except for parts corresponding to literal values,
 each `MessagePart` MUST include the `type` and `source` from the `MessageValue`.
 It MAY also include a string `locale` identifier,
-an explicit `value` of any type,
-and/or its own sequence of `parts`.
+and optionally either an explicit `value` of any type
+or its own sequence of `parts`.
 
 In order to be usable as a variant selector,
 the `MessageValue` object MUST include a `selectKeys` method.
@@ -282,23 +283,23 @@ While its resolved value is never presented as JS,
 for the sake of simplicity it may be thought of as having the following resolved value:
 
 ```ts
-interface MessageLiteral {
-  type: 'literal';
+interface MessageText {
+  type: 'text';
   locale: string;
   source: string;
-  toParts(): [MessageLiteralPart];
+  toParts(): [MessageTextPart];
   toString(): string;
 }
 
-interface MessageLiteralPart {
-  type: 'literal';
+interface MessageTextPart {
+  type: 'text';
   value: string;
 }
 ```
 
-For `MessageLiteral`, the value returned by `toString()` and
+For `MessageText`, the value returned by `toString()` and
 the `value` field of the object returned by `toParts()`
-correspond to the text source.
+corresponding to the text source.
 Its `locale` is always the same as the message's base locale.
 
 #### Expressions
@@ -457,7 +458,7 @@ interface MessageNumber {
 
 interface MessageNumberPart {
   type: 'number';
-  locale: string;
+  locale?: string;
   source: string;
   parts: Intl.NumberFormatPart[];
 }
@@ -504,7 +505,7 @@ interface MessageString {
 
 interface MessageStringPart {
   type: 'string';
-  locale: string;
+  locale?: string;
   source: string;
   value: string;
 }
@@ -546,7 +547,8 @@ that include "markup", "reserved" or "private-use" annotations.
 
 The `source` of the `MessageFallback` corresponds to the `source` of the `MessageValue`.
 When `MessageFallback` is formatted to a string,
-its value is the concatenation of `'{'`, the `source` value, and `'}'`.
+its value is the concatenation of a left curly brace `{`, the `source` value,
+and a right curly brace `}`.
 
 ## Comparison
 
