@@ -56,11 +56,11 @@ contributors: Eemeli Aro
         1. Let _matcher_ be ? GetOption(_options_, *"localeMatcher"*, ~string~,
            &laquo; *"lookup"*, *"best fit"* &raquo;, *"best fit"*).
         1. Let _userFunctions_ be ? Get(_options_, *"functions"*).
-        1. Let _runtime_ be ? GetMessageRuntime(_userFunctions_).
+        1. Let _functions_ be ? GetMessageFunctions(_userFunctions_).
         1. Set _messageFormat_.[[MessageData]] to _msgData_.
         1. Set _messageFormat_.[[RequestedLocales]] to _requestedLocales_.
         1. Set _messageFormat_.[[LocaleMatcher]] to _matcher_.
-        1. Set _messageFormat_.[[Runtime]] to _runtime_.
+        1. Set _messageFormat_.[[Functions]] to _functions_.
         1. Return _messageFormat_.
       </emu-alg>
     </emu-clause>
@@ -90,7 +90,7 @@ contributors: Eemeli Aro
 
       <emu-note>
         Unlike other Intl formatters,
-        MessageFormat does not necessarily have a single list of locales that it supports,
+        MessageFormat does not have a single list of locales that it supports,
         as it calls on other formatters as necessary.
       </emu-note>
     </emu-clause>
@@ -126,19 +126,65 @@ contributors: Eemeli Aro
       </p>
     </emu-clause>
 
-    <emu-clause id="sec-intl.messageformat.prototype.select">
-      <h1>Intl.MessageFormat.prototype.resolveMessage ( [ _values_ [ , _onError_ ] ] )</h1>
+    <emu-clause id="sec-intl.messageformat.prototype.format">
+      <h1>Intl.MessageFormat.prototype.format ( [ _values_ [ , _onError_ ] ] )</h1>
 
       <p>
-        When the `resolveMessage` method is called with optional arguments
+        When the `format` method is called with optional arguments
         _values_ and _onError_, the following steps are taken:
       </p>
 
       <emu-alg>
         1. Let _mf_ be the *this* value.
         1. Perform ? RequireInternalSlot(_mf_, [[InitializedMessageFormat]]).
-        1. ...TODO
-        1. Return ! ResolveMessage(_mf_, _values_, _onError_).
+        1. Let _msg_ be ? ResolveMessage(_mf_, _values_, _onError_).
+        1. Let _result_ be an empty String.
+        1. For each element _mv_ of _msg_, do
+           1. If _mv_ is a String, then
+              1. Let _stringValue_ be _mv_.
+           1. Else,
+              1. Let _toString_ be ? Get(_mv_, *"toString"*).
+              1. Let _toStringResult_ be Completion(Call(_toString_, _mv_)).
+              1. If _toStringResult_ is a normal completion, then
+                 1. Let _stringValue_ be _toStringResult_.[[Value]].
+              1. Else,
+                 1. Perform ? HandleMessageFormatError(_onError_, _stringResult_).
+                 1. Let _stringValue_ be MessageFallbackString(_mv_).
+           1. Set _result_ to the string-concatenation of _result_ and _stringValue_.
+        1. Return _result_.
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id="sec-intl.messageformat.prototype.formatToParts">
+      <h1>Intl.MessageFormat.prototype.formatToParts ( [ _values_ [ , _onError_ ] ] )</h1>
+
+      <p>
+        When the `formatToParts` method is called with optional arguments
+        _values_ and _onError_, the following steps are taken:
+      </p>
+
+      <emu-alg>
+        1. Let _mf_ be the *this* value.
+        1. Perform ? RequireInternalSlot(_mf_, [[InitializedMessageFormat]]).
+        1. Let _msg_ be ? ResolveMessage(_mf_, _values_, _onError_).
+        1. Let _result_ be an empty List of Objects.
+        1. For each element _mv_ of _msg_, do
+           1. If _mv_ is a String, then
+              1. Let _textPart_ be OrdinaryObjectCreate(%Object.prototype%).
+              1. Perform ! CreateDataPropertyOrThrow(_textPart_, *"type"*, *"text"*).
+              1. Perform ! CreateDataPropertyOrThrow(_textPart_, *"value"*, _mv_).
+              1. Append _textPart_ to _result_.
+           1. Else,
+              1. Let _toParts_ be ? Get(_mv_, *"toParts"*).
+              1. Let _partResult_ be Completion(Call(_toParts_, _mv_)).
+              1. If _partResult_ is a normal completion, then
+                 1. Let _parts_ be _partResult_.[[Value]].
+                 1. For each _part_ of _parts_, append _part_ to _result_.
+              1. Else,
+                 1. Perform ? HandleMessageFormatError(_onError_, _partResult_).
+                 1. Let _fallbackPart_ be MessageFallbackPart(_mv_).
+                 1. Append _fallbackPart_ to _result_.
+        1. Return CreateArrayFromList(_result_).
       </emu-alg>
     </emu-clause>
 
@@ -174,12 +220,16 @@ contributors: Eemeli Aro
             </tr>
           </thead>
           <tr>
-            <td>[[RequestedLocales]]</td>
-            <td>*"locales"*</td>
+            <td>[[Functions]]</td>
+            <td>*"functions"*</td>
           </tr>
           <tr>
             <td>[[LocaleMatcher]]</td>
             <td>*"localeMatcher"*</td>
+          </tr>
+          <tr>
+            <td>[[RequestedLocales]]</td>
+            <td>*"locales"*</td>
           </tr>
           <tr>
             <td>[[MessageData]]</td>
@@ -216,7 +266,7 @@ contributors: Eemeli Aro
         with the canonicalized language tags of the requested locales
         to use for message formatting.
       </li>
-      <li>[[Runtime]] is an Object ...TODO</li>
+      <li>[[Functions]] is an Object ...TODO</li>
     </ul>
   </emu-clause>
 
@@ -232,22 +282,133 @@ contributors: Eemeli Aro
       <dl class="header">
         <dt>description</dt>
         <dd>
-          It determines the message data representation corresponding to the input _source_ according to the
-          <a href="https://github.com/unicode-org/message-format-wg/blob/main/spec/syntax.md">
-            Unicode MessageFormat 2.0 syntax</a>.
+          <p>
+            It determines the message data representation corresponding to the input _source_ according to the
+            <a href="https://github.com/unicode-org/message-format-wg/blob/main/spec/syntax.md">Unicode MessageFormat 2.0 syntax</a>.
+            The message data representation is an Object conforming to the
+            <a href="https://github.com/unicode-org/message-format-wg/blob/main/spec/data-model/message.json">JSON Schema definition</a>
+            of the Unicode MessageFormat 2.0 specification.
+          </p>
+
+          <p>If _source_ contains a syntax or data model error, this operation throws a %SyntaxError%.</p>
         </dd>
       </dl>
     </emu-clause>
 
-    <emu-clause id="sec-getmessageruntime" type="abstract operation">
+    <emu-clause id="sec-getmessagefunctions" type="abstract operation">
       <h1>
-        GetMessageRuntime (
+        GetMessageFunctions (
           _userFunctions_: an Object or undefined,
         )
       </h1>
       <dl class="header">
         <dt>description</dt>
-        <dd>...TODO</dd>
+        <dd>It determines the functions available during message formatting.</dd>
+      </dl>
+
+      <emu-alg>
+        1. ...TODO
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id="sec-handlemessageformaterror" type="abstract operation">
+      <h1>
+        HandleMessageFormatError(
+          _onError_: a Function or undefined,
+          _completionRecord_: a Completion Record,
+        )
+      </h1>
+      <dl class="header">
+        <dt>description</dt>
+        <dd>It handles errors during formatting.</dd>
+      </dl>
+
+      <emu-alg>
+        1. Assert: _completionRecord_ is a Completion Record.
+        1. Assert: _completionRecord_ is an abrupt completion.
+        1. Let _error_ be _completionRecord_.[[Value]].
+        1. If _onError_ is not *undefined*, then
+           1. Perform ? Call(_onError_, *undefined*, &laquo; _error_ &raquo;).
+        1. Else if an appropriate notification mechanism exists, then
+           1. An implementation should issue a warning for _error_.
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id="sec-messagefallbackpart" type="abstract operation">
+      <h1>
+        MessageFallbackPart (
+          _mv_: an Object
+        )
+      </h1>
+      <dl class="header">
+        <dt>description</dt>
+        <dd>It gets the fallback formatted part representation of a MessageValue</dd>
+      </dl>
+
+      <emu-alg>
+        1. Let _result_ be OrdinaryObjectCreate(%Object.prototype%).
+        1. Let _source_ be MessageValueSource(_mv_).
+        1. Perform ! CreateDataPropertyOrThrow(_result_, *"type"*, *"fallback"*).
+        1. Perform ! CreateDataPropertyOrThrow(_result_, *"source"*, _source_).
+        1. Return _result_.
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id="sec-messagefallbackstring" type="abstract operation">
+      <h1>
+        MessageFallbackString (
+          _mv_: an Object
+        )
+      </h1>
+      <dl class="header">
+        <dt>description</dt>
+        <dd>It gets the fallback formatted string representation of a MessageValue</dd>
+      </dl>
+
+      <emu-alg>
+        1. Let _source_ be MessageValueSource(_mv_).
+        1. Let _result_ be the string-concatenation of *"{"*, _source_, and *"}"*.
+        1. Return _result_.
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id="sec-messagevaluesource" type="abstract operation">
+      <h1>
+        MessageValueSource (
+          _mv_: an Object
+        )
+      </h1>
+      <dl class="header">
+        <dt>description</dt>
+        <dd>
+          It gets the source string representation of a MessageValue,
+          which should be always available.
+          On any error, return the Unicode replacement character � instead.
+        </dd>
+      </dl>
+
+      <emu-alg>
+        1. Let _source_ be Completion(Get(_mv_, *"source"*)).
+        1. If _source_ is a normal completion, then
+           1. Let _str_ be _source_.[[Value]].
+           1. If _str_ is a String, then
+              1. Return _str_.
+        1. Return *"\uFFFD"*.
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id="sec-resolveexpression" type="abstract operation">
+      <h1>
+        ResolveExpression (
+          _mf_: an Object,
+          _values_: an Object,
+          _onError_: a Function or undefined,
+          _expression_: an Object,
+        )
+      </h1>
+      <dl class="header">
+        <dt>description</dt>
+        <dd>It resolves the value of an expression for selection and formatting.</dd>
       </dl>
 
       <emu-alg>
@@ -260,17 +421,100 @@ contributors: Eemeli Aro
         ResolveMessage (
           _mf_: an Object,
           _values_: an Object,
-          _onError_: a Function,
+          _onError_: a Function or undefined,
         )
       </h1>
       <dl class="header">
         <dt>description</dt>
-        <dd>...TODO</dd>
+        <dd>It resolves a message during formatting into a List of MessageValue Objects.</dd>
       </dl>
 
       <emu-alg>
-        1. ...TODO
+        1. Let _result_ be an empty List.
+        1. Let _pattern_ be ? SelectPattern(_mf_, _values_, _onError_).
+        1. For each element _el_ of _pattern_,
+           1. If _el_ is a String, then
+              1. Append _el_ to _result_.
+           1. Else,
+              1. Let _mv_ be ResolveExpression(_mf_, _values_, _onError_, _el_).
+              1. Append _mv_ to _result_.
+        1. Return _result_.
       </emu-alg>
+    </emu-clause>
+
+    <emu-clause id="sec-selectpattern" type="abstract operation">
+      <h1>
+        SelectPattern (
+          _mf_: an Object,
+          _values_: an Object,
+          _onError_: a Function or undefined,
+        )
+      </h1>
+      <dl class="header">
+        <dt>description</dt>
+        <dd>It selects the pattern to format from the message data model.</dd>
+      </dl>
+
+      <emu-alg>
+        1. Let _msgData_ be _mf_.[[MessageData]].
+        1. Let _msgType_ be ? Get(_msgData_, *"type"*).
+        1. Assert: _msgType_ is a String.
+        1. If _msgType_ is *"message"*, then
+           1. Let _pattern_ be ? Get(_msgData_, *"pattern"*).
+        1. Else,
+           1. Let _selectorsData_ be ? Get(_msgData_, *"selectors"*).
+           1. Let _selectorExpressions_ be ? CreateListFromArrayLike(_selectorsData_, &laquo; Object &raquo;).
+           1. Let _selectors_ be an empty List of Object and Null values.
+           1. For each element _selExp_ of _selectorExpressions_,
+              1. Let _sel_ be ResolveExpression(_mf_, _values_, _onError_, _selExp_).
+              1. Let _selectKeys_ be ? Get(_sel_, *"selectKeys"*).
+              1. If IsCallable(_selectKeys_) is *true*, then
+                 1. Append _sel_ to _selectors_.
+              1. Else,
+                 1. Let _errorCompletion_ be ThrowCompletion(*TypeError*).
+                 1. Perform ? HandleMessageFormatError(_onError_, _errorCompletion_).
+                 1. Append *null* to _selectors_.
+           1. Let _variantsArray_ be ? Get(_msgData_, *"variants"*).
+           1. Let _variants_ be ? CreateListFromArrayLike(_variantsArray_, &laquo; Object &raquo;).
+           1. Let _selectedVariant_ be ? SelectVariant(_selectors_, _variants_, _onError_).
+        1. Let _patternBody_ be ? Get(_pattern_, *"body"*).
+        1. Return ? CreateListFromArrayLike(_patternBody_, &laquo; String, Object &raquo;).
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id="sec-selectvariant" type="implementation-defined abstract operation">
+      <h1>
+        SelectVariant (
+          _selectors_: a List of Object and Null values,
+          _variants_: a List of Objects,
+          _onError_: a Function or undefined,
+        )
+      </h1>
+      <dl class="header">
+        <dt>description</dt>
+        <dd>
+          <p>
+            It applies the variant selection method defined by
+            the "Resolve Preferences", "Filter Variants", and "Sort Variants" steps of the
+            <a href="https://github.com/unicode-org/message-format-wg/blob/main/spec/formatting.md#pattern-selection">Pattern Selection</a>
+            section of the Unicode MessageFormat 2.0 specification.
+          </p>
+
+          <p>
+            For the selection, Null values in _selectors_ indicate selectors for which selection will always fail.
+            If any errors are encountered during the selection,
+            the HandleMessageFormatError abstract operation must be called
+            with _onError_ and an abrupt Completion Record containing an Error.
+          </p>
+
+          <p>
+            The value returned by this operation must be an Object matching the JSON Schema definition of a message pattern:
+            <a href="https://github.com/unicode-org/message-format-wg/blob/main/spec/data-model/message.json#/$defs/pattern">
+              https://github.com/unicode-org/message-format-wg/blob/main/spec/data-model/message.json#/$defs/pattern
+            </a>.
+          </p>
+        </dd>
+      </dl>
     </emu-clause>
   </emu-clause>
 </emu-clause>
