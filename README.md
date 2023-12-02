@@ -274,7 +274,7 @@ though its JavaScript representation is only available to custom functions.
 interface MessageValue {
   type: string;
   locale: string;
-  dir: 'ltr' | 'rtl' | 'auto'
+  dir: 'ltr' | 'rtl' | 'auto';
   source: string;
   options?: { [key: string]: unknown };
   selectKeys?: (keys: string[]) => string[];
@@ -285,10 +285,15 @@ interface MessageValue {
 
 type MessagePart =
   | { type: 'text'; value: string }
+  | {
+      type: 'bidiIsolation';
+      value: '\u2066' | '\u2067' | '\u2068' | '\u2069'; // LRI | RLI | FSI | PDI
+    }
   | ({
       type: string;
       source: string;
       locale?: string;
+      dir?: 'ltr' | 'rtl' | 'auto';
     } & (
       | { value?: unknown }
       | { parts: Array<{ type: string; value: unknown; source?: string }> }
@@ -335,9 +340,9 @@ for the sake of simplicity it may be thought of as having the following resolved
 ```ts
 interface MessageText {
   type: 'text';
-  locale: string;
-  dir: 'ltr' | 'rtl' | 'auto'
   source: string;
+  locale: string;
+  dir: 'ltr' | 'rtl' | 'auto';
   toParts(): [MessageTextPart];
   toString(): string;
 }
@@ -437,9 +442,9 @@ Otherwise, un-annotated values resolve to the following shape:
 ```ts
 interface MessageUnknownValue {
   type: 'unknown';
-  locale: string;
-  dir: 'ltr' | 'rtl' | 'auto'
   source: string;
+  locale: string;
+  dir: 'ltr' | 'rtl' | 'auto';
   toParts(): [MessageUnknownPart];
   toString(): string;
   valueOf(): unknown;
@@ -499,9 +504,9 @@ Returns a value with the following shape:
 ```ts
 interface MessageNumber {
   type: 'number';
-  locale: string;
-  dir: 'ltr' | 'rtl' | 'auto'
   source: string;
+  locale: string;
+  dir: 'ltr' | 'rtl' | 'auto';
   options: Intl.NumberFormatOptions & Intl.PluralRulesOptions;
   selectKeys(keys: string[]): string[];
   toParts(): [MessageNumberPart];
@@ -511,9 +516,9 @@ interface MessageNumber {
 
 interface MessageNumberPart {
   type: 'number';
-  locale?: string;
-  dir: 'ltr' | 'rtl' | 'auto'
   source: string;
+  locale?: string;
+  dir?: 'ltr' | 'rtl' | 'auto';
   parts: Intl.NumberFormatPart[];
 }
 ```
@@ -549,9 +554,9 @@ Returns a value with the following shape:
 ```ts
 interface MessageString {
   type: 'string';
-  locale: string;
-  dir: 'ltr' | 'rtl' | 'auto'
   source: string;
+  locale: string;
+  dir: 'ltr' | 'rtl' | 'auto';
   selectKeys(keys: string[]): [] | [string];
   toParts(): [MessageStringPart];
   toString(): string;
@@ -560,9 +565,9 @@ interface MessageString {
 
 interface MessageStringPart {
   type: 'string';
-  locale?: string;
-  dir: 'ltr' | 'rtl' | 'auto'
   source: string;
+  locale?: string;
+  dir?: 'ltr' | 'rtl' | 'auto';
   value: string;
 }
 ```
@@ -587,7 +592,7 @@ In such a case, a fallback representation is used instead for the value:
 interface MessageFallback {
   type: 'fallback';
   locale: 'und';
-  dir: 'auto'
+  dir: 'auto';
   source: string;
   toParts(): [MessageFallbackPart];
   toString(): string;
