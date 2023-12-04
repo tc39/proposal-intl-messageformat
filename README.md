@@ -150,6 +150,20 @@ for the creation of `MessageFormat` instances.
 The `ResolvedMessageFormatOptions` object contains the options
 resolved during the construction of the `MessageFormat` instance.
 
+As messages may contain placeholders resolving to strings with different directionality
+than the message as a whole (as in, left-to-right vs. right-to-left),
+the `bidiIsolation` option defines a strategy
+by which these parts will be isolated from each other in the output to avoid spillover effects.
+The default `'compatibility'` strategy will include Unicode isolate code points
+at the boundaries of all expressions that are not known to match the message's directionality.
+The `'none'` strategy will not provide any bidirectional isolation.
+
+By default the message's directionality is determined from
+the script corresponding to the first locale,
+but this may be overridden by `dir`.
+Its `"auto"` value corresponds to messages with unknown directionality,
+for which the direction is determined by the first strongly directional character.
+
 Custom user-defined message formatting and selection functions may defined by the `functions` option.
 These allow for any data types to be handled by custom functions.
 Such functions may be referenced within messages,
@@ -157,11 +171,15 @@ and then called with the resolved values of their arguments and options.
 
 ```ts
 interface MessageFormatOptions {
+  bidiIsolation?: 'compatibility' | 'none';
+  dir?: 'ltr' | 'rtl' | 'auto';
   functions?: { [key: string]: MessageFunction };
   localeMatcher?: 'best fit' | 'lookup';
 }
 
 interface ResolvedMessageFormatOptions {
+  bidiIsolation: 'compatibility' | 'none';
+  dir: 'ltr' | 'rtl' | 'auto';
   functions: { [key: string]: MessageFunction };
   locales: string[];
   localeMatcher: 'best fit' | 'lookup';
@@ -184,10 +202,31 @@ To determine the value `res` returned by the `format()` method,
 the message is first resolved to a list of MessageValue instances.
 Starting with an empty string `res`, for each MessageValue `mv`:
 
+1. Let `msgDir` be the base direction of the message.
+1. Let `bidiIsolation` be the resolved value of the `bidiIsolation` option.
+1. Let `dir` be `mv.dir`.
 1. Let `strval` be the result of calling `mv.toString()`.
 1. If the call fails or `strval` is not a string:
    1. Set `strval` to be the concatenation of `{`, `mv.source`, and `}`.
-1. Append `strval` to the end of `res`.
+   1. Set `dir` to be `"auto"`.
+1. Let `bidi` be the `{ start: string, end: string }` result of calling
+   `ApplyBidiIsolation(bidiIsolation, msgDir, dir)`.
+1. Append `bidi.start`, `strval`, and `bidi.end` to the end of `res`.
+
+The ApplyBidiIsolation abstract operation will take as arguments
+the current bidi isolation strategy and the message and part directions.
+From these it will determine `start` and `end` as sequences of Unicode code points
+which will, if necessary, isolate parts from each other.
+With the default "compatibility" strategy, the result matches this TS type:
+
+```ts
+type BidiIsolation =
+  | { start: ''; end: '' }
+  | {
+      start: '\u2066' | '\u2067' | '\u2068'; // LRI | RLI | FSI
+      end: '\u2069'; // PDI
+    };
+```
 
 #### formatToParts(values?, onError?)
 
@@ -205,11 +244,21 @@ To determine the value `res` returned by the `formatToParts()` method,
 the message is first resolved to a list of MessageValue instances.
 Starting with an empty array `res`, for each MessageValue `mv`:
 
+1. Let `msgDir` be the base direction of the message.
+1. Let `bidiIsolation` be the resolved value of the `bidiIsolation` option.
+1. Let `dir` be `mv.dir`.
 1. Let `parts` be the result of calling `mv.toParts()`.
 1. If the call fails or `parts` is not an array:
-   1. Set `parts` to be `[{ type: 'fallback', locale: 'und', source: mv.source }]`.
+   1. Set `parts` to be `[{ type: "fallback", source: mv.source }]`.
+   1. Set `dir` to be `"auto"`.
+1. Let `bidi` be the `{ start: string, end: string }` result of calling
+   `ApplyBidiIsolation(bidiIsolation, msgDir, dir)`.
+1. If `bidi.start` is not an empty string:
+   1. Append `{ type: 'bidiIsolation', value: bidi.start }` to `res`.
 1. For each `part` or `parts`:
    1. Append `part` to `res`.
+1. If `bidi.end` is not an empty string:
+   1. Append `{ type: 'bidiIsolation', value: bidi.end }` to `res`.
 
 [fallback representation]: https://github.com/unicode-org/message-format-wg/blob/main/spec/formatting.md#fallback-resolution
 
@@ -225,6 +274,7 @@ though its JavaScript representation is only available to custom functions.
 interface MessageValue {
   type: string;
   locale: string;
+  dir: 'ltr' | 'rtl' | 'auto';
   source: string;
   options?: { [key: string]: unknown };
   selectKeys?: (keys: string[]) => string[];
@@ -235,10 +285,15 @@ interface MessageValue {
 
 type MessagePart =
   | { type: 'text'; value: string }
+  | {
+      type: 'bidiIsolation';
+      value: '\u2066' | '\u2067' | '\u2068' | '\u2069'; // LRI | RLI | FSI | PDI
+    }
   | ({
       type: string;
       source: string;
       locale?: string;
+      dir?: 'ltr' | 'rtl' | 'auto';
     } & (
       | { value?: unknown }
       | { parts: Array<{ type: string; value: unknown; source?: string }> }
@@ -285,8 +340,9 @@ for the sake of simplicity it may be thought of as having the following resolved
 ```ts
 interface MessageText {
   type: 'text';
-  locale: string;
   source: string;
+  locale: string;
+  dir: 'ltr' | 'rtl' | 'auto';
   toParts(): [MessageTextPart];
   toString(): string;
 }
@@ -386,8 +442,9 @@ Otherwise, un-annotated values resolve to the following shape:
 ```ts
 interface MessageUnknownValue {
   type: 'unknown';
-  locale: string;
   source: string;
+  locale: string;
+  dir: 'ltr' | 'rtl' | 'auto';
   toParts(): [MessageUnknownPart];
   toString(): string;
   valueOf(): unknown;
@@ -447,8 +504,9 @@ Returns a value with the following shape:
 ```ts
 interface MessageNumber {
   type: 'number';
-  locale: string;
   source: string;
+  locale: string;
+  dir: 'ltr' | 'rtl' | 'auto';
   options: Intl.NumberFormatOptions & Intl.PluralRulesOptions;
   selectKeys(keys: string[]): string[];
   toParts(): [MessageNumberPart];
@@ -458,8 +516,9 @@ interface MessageNumber {
 
 interface MessageNumberPart {
   type: 'number';
-  locale?: string;
   source: string;
+  locale?: string;
+  dir?: 'ltr' | 'rtl' | 'auto';
   parts: Intl.NumberFormatPart[];
 }
 ```
@@ -495,8 +554,9 @@ Returns a value with the following shape:
 ```ts
 interface MessageString {
   type: 'string';
-  locale: string;
   source: string;
+  locale: string;
+  dir: 'ltr' | 'rtl' | 'auto';
   selectKeys(keys: string[]): [] | [string];
   toParts(): [MessageStringPart];
   toString(): string;
@@ -505,8 +565,9 @@ interface MessageString {
 
 interface MessageStringPart {
   type: 'string';
-  locale?: string;
   source: string;
+  locale?: string;
+  dir?: 'ltr' | 'rtl' | 'auto';
   value: string;
 }
 ```
@@ -531,6 +592,7 @@ In such a case, a fallback representation is used instead for the value:
 interface MessageFallback {
   type: 'fallback';
   locale: 'und';
+  dir: 'auto';
   source: string;
   toParts(): [MessageFallbackPart];
   toString(): string;
