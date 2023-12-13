@@ -330,7 +330,7 @@ contributors: Eemeli Aro
         1. If _onError_ is not *undefined*, then
            1. Perform ? Call(_onError_, *undefined*, &laquo; _error_ &raquo;).
         1. Else if an appropriate notification mechanism exists, then
-           1. An implementation should issue a warning for _error_.
+           1. Issue a warning for _error_.
       </emu-alg>
     </emu-clause>
 
@@ -401,7 +401,7 @@ contributors: Eemeli Aro
       <h1>
         ResolveExpression (
           _mf_: an Object,
-          _values_: an Object,
+          _values_: an Object or undefined,
           _onError_: a Function or undefined,
           _expression_: an Object,
         )
@@ -420,7 +420,7 @@ contributors: Eemeli Aro
       <h1>
         ResolveMessage (
           _mf_: an Object,
-          _values_: an Object,
+          _values_: an Object or undefined,
           _onError_: a Function or undefined,
         )
       </h1>
@@ -446,7 +446,7 @@ contributors: Eemeli Aro
       <h1>
         SelectPattern (
           _mf_: an Object,
-          _values_: an Object,
+          _values_: an Object or undefined,
           _onError_: a Function or undefined,
         )
       </h1>
