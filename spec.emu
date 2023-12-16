@@ -91,7 +91,7 @@ contributors: Eemeli Aro
       <emu-note>
         Unlike other Intl formatters,
         MessageFormat does not have a single list of locales that it supports,
-        as it calls on other formatters as necessary.
+        as it calls other formatters as necessary.
       </emu-note>
     </emu-clause>
   </emu-clause>
@@ -130,7 +130,7 @@ contributors: Eemeli Aro
       <h1>Intl.MessageFormat.prototype.format ( [ _values_ [ , _onError_ ] ] )</h1>
 
       <p>
-        When the `format` method is called with optional arguments
+        When the `format` method is called with the optional arguments
         _values_ and _onError_, the following steps are taken:
       </p>
 
@@ -159,7 +159,7 @@ contributors: Eemeli Aro
       <h1>Intl.MessageFormat.prototype.formatToParts ( [ _values_ [ , _onError_ ] ] )</h1>
 
       <p>
-        When the `formatToParts` method is called with optional arguments
+        When the `formatToParts` method is called with the optional arguments
         _values_ and _onError_, the following steps are taken:
       </p>
 
@@ -257,7 +257,7 @@ contributors: Eemeli Aro
 
     <ul>
       <li>
-        [[LocaleMatcher]] is one of the String values *"looup"* or *"best fit"*,
+        [[LocaleMatcher]] is one of the String values *"lookup"* or *"best fit"*,
         identifying the locale matcher used.
       </li>
       <li>[[MessageData]] is an Object ...TODO</li>
