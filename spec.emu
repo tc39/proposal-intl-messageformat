@@ -277,7 +277,7 @@ contributors: Eemeli Aro
       <h1>
         GetMessageData (
           _source_: a String,
-        )
+        ): an Object
       </h1>
       <dl class="header">
         <dt>description</dt>
@@ -299,7 +299,7 @@ contributors: Eemeli Aro
       <h1>
         GetMessageFunctions (
           _userFunctions_: an Object or undefined,
-        )
+        ): a Record
       </h1>
       <dl class="header">
         <dt>description</dt>
@@ -338,7 +338,7 @@ contributors: Eemeli Aro
       <h1>
         MessageFallbackPart (
           _mv_: an Object
-        )
+        ): an Object
       </h1>
       <dl class="header">
         <dt>description</dt>
@@ -358,7 +358,7 @@ contributors: Eemeli Aro
       <h1>
         MessageFallbackString (
           _mv_: an Object
-        )
+        ): a String
       </h1>
       <dl class="header">
         <dt>description</dt>
@@ -376,7 +376,7 @@ contributors: Eemeli Aro
       <h1>
         MessageValueSource (
           _mv_: an Object
-        )
+        ): a String
       </h1>
       <dl class="header">
         <dt>description</dt>
@@ -404,7 +404,7 @@ contributors: Eemeli Aro
           _values_: an Object or undefined,
           _onError_: a Function or undefined,
           _expression_: an Object,
-        )
+        ): an Object
       </h1>
       <dl class="header">
         <dt>description</dt>
@@ -422,7 +422,7 @@ contributors: Eemeli Aro
           _mf_: an Object,
           _values_: an Object or undefined,
           _onError_: a Function or undefined,
-        )
+        ): a List of Objects
       </h1>
       <dl class="header">
         <dt>description</dt>
@@ -448,7 +448,7 @@ contributors: Eemeli Aro
           _mf_: an Object,
           _values_: an Object or undefined,
           _onError_: a Function or undefined,
-        )
+        ): a List of Strings and Objects
       </h1>
       <dl class="header">
         <dt>description</dt>
@@ -488,7 +488,7 @@ contributors: Eemeli Aro
           _selectors_: a List of Object and Null values,
           _variants_: a List of Objects,
           _onError_: a Function or undefined,
-        )
+        ): an Object
       </h1>
       <dl class="header">
         <dt>description</dt>
