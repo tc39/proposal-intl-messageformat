@@ -83,9 +83,9 @@ mf1.format(); // 'Hello!'
 const mf2 = new Intl.MessageFormat('Hello {$place}!', 'en');
 const greet = mf.formatToParts({ place: 'world' });
 /* [
-  { type: 'literal', value: 'Hello ' },
+  { type: 'text', value: 'Hello ' },
   { type: 'string', source: '$place', value: 'world' },
-  { type: 'literal', value: '!' }
+  { type: 'text', value: '!' }
 ] */
 ```
 
