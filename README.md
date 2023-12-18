@@ -102,13 +102,30 @@ The other `interface` descriptions below are intended to represent plain objects
 
 ### MessageData
 
-The `MessageData` interface will be defined by
-the MF2 data model developed by the MF2 working group.
+The `MessageData` interface is defined by the
+[MF2 data model](https://github.com/unicode-org/message-format-wg/tree/main/spec/data-model)
+developed by the Unicode MessageFormat working group.
 It contains a parsed representation of a single message for a particular locale.
 
 ```ts
-interface MessageData {}
+type MessageData = PatternMessage | SelectMessage;
+
+interface PatternMessage {
+  type: 'message';
+  declarations: Declaration[];
+  pattern: Pattern;
+}
+
+interface SelectMessage {
+  type: 'select';
+  declarations: Declaration[];
+  selectors: Expression[];
+  variants: Variant[];
+}
 ```
+
+The full and exact definition of the message data model is given by its
+[JSON Schema definition](https://github.com/unicode-org/message-format-wg/blob/main/spec/data-model/message.json).
 
 ### MessageFormat
 
