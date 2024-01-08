@@ -403,12 +403,21 @@ to complement or replace the default ones.
 
 ```ts
 type MessageFunction = (
-  source: string,
-  locales: string[],
+  msgCtx: MessageFunctionContext,
   options: { [key: string]: unknown },
   input?: unknown
 ) => MessageValue;
+
+interface MessageFunctionContext {
+  locales: string[];
+  dir: 'ltr' | 'rtl' | 'auto';
+  source: string;
+}
 ```
+
+The `msgCtx` value defines the context in which the expression is being resolved,
+with the `locales` and `dir` of the whole message
+as well as the `source` fallback string representation of the expression.
 
 The `input` and `options` values are constructed as follows:
 
