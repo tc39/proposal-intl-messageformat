@@ -388,17 +388,61 @@ An expression may have one of three forms:
 - An operand with an annotation.
 - An annotation with no operand.
 
-There are three different types of supported annotations,
-distinguished by their first character:
-
-- `':'` for standalone annotations like numbers and strings,
-- `'+'` for "open" annotations that start a markup span, and
-- `'-'` for "close" annotations that end a markup span.
-
-The resolution of standalone annotations is customisable
+The resolution of annotations using the `:` prefix is customisable
 using the constructor's `functions` option,
 which takes `MessageFunction` function values that are applied when
 the annotation's name (without the `:`) corresponds to the `functions` key.
+
+#### Markup
+
+In addition to expressions, placeholders may also be markup;
+content corresponding to HTML elements or other markup syntax.
+Unlike expressions, markup does not accept a positional input argument
+and its resolution is not customizable by the `functions` option.
+
+Markup placeholders take three different forms:
+
+- "standalone" markup for non-textual content such as inline images,
+- "open" markup that starts a markup span, and
+- "close" markup that end a markup span.
+
+The syntax used by markup corresponds to that of XML,
+though with `#` as a prefix for "standalone" and "open": `{#img /}`, `{#b}`, `{/b}`.
+
+Markup placeholders are not required to be paired or nest cleanly;
+within the formatter each is only considered by itself,
+and any higher-level validation is the responsibility of the caller.
+
+A markup placeholder cannot be used as a selector.
+In `format()`, all markup is effectively ignored, each formatting to an empty string.
+In `formatToParts()`, each markup placeholder formats to one part:
+
+```ts
+interface MessageMarkupPart {
+  type: 'markup';
+  kind: 'open' | 'standalone' | 'close';
+  source: string;
+  name: string;
+  options?: { [key: string]: unknown };
+}
+```
+
+The `type` of the part is always `"markup"`,
+and its `kind` is one of `"open"`, `"standalone"`, or `"close"`.
+The `name` matches the name of the markup,
+without the `#` or `/` prefixes or suffixes.
+The `source` matches the `name` of the markup placeholder,
+prefixed and suffixed with the appropriate `#` and `/` characters.
+
+The `options` correspond to the resolved literal and variable values
+of the options included in the placeholder.
+For example, when formatting `{#open foo=42 bar=$baz}` with `formatToParts({ baz: 13 })`,
+the formatted part's `options` would be `{ foo: '42', bar: 13 }`.
+For options with variable reference values,
+if the resolved value is an object with a `valueOf()` method that does not return the object itself,
+the returned value is used.
+The `options` are never included for a "close" markup placeholder,
+as they are only supported for "open" and "standalone".
 
 ### MessageFunction
 
@@ -608,57 +652,6 @@ interface MessageStringPart {
 When a `MessageString` is used as a selector,
 the returned array may include at most one entry,
 if one of the keys was an exact string match for the value.
-
-### Message Markup
-
-In addition to standalone annotations such as `:number` and `:string`,
-MF2 messages may include placeholders that indicate the start/open (`+`) and end/close (`-`) of markup spans,
-such as `+b` or `-link`.
-Markup placeholders are not required to be paired or nest cleanly;
-within the formatter each is only considered by itself,
-and any higher-level validation is the responsibility of the caller.
-
-Unlike standalone annotations,
-the resolution of these placeholders cannot be customised;
-they are instead included almost directly in the formatted-parts output.
-A markup placeholder always resolves as:
-
-```ts
-interface MessageMarkup {
-  type: 'open' | 'close';
-  locale: string;
-  source: string;
-  name: string;
-  options: { [key: string]: unknown };
-  toParts(): [MessageMarkupPart];
-  toString(): '';
-  valueOf?: () => unknown;
-}
-
-interface MessageMarkupPart {
-  type: 'open' | 'close';
-  source: string;
-  name: string;
-  value?: unknown;
-  options: { [key: string]: unknown };
-}
-```
-
-A markup placeholder cannot be used as a selector.
-When formatted to a string, a markup placeholder is formatted as an empty string.
-The `name` of the `MessageMarkup` matches the name of the annotation,
-without the `+` or `-` prefix.
-If the placeholder includes an input argument,
-the `valueOf()` method is defined and returns that value,
-and the `source` matches that of the input argument.
-Otherwise, the `source` matches the `name` of the markup placeholder,
-prefixed with the appropriate `+` or `-` character.
-
-When `MessageMarkup` is formatted to parts,
-the `type`, `name` and `source` of the `MessageMarkupPart` match those of the `MessageMarkup`.
-For each of the `value` and `options` values,
-if the corresponding value is an object with a `valueOf()` method that does not return the object itself,
-the returned value is used.
 
 ### Fallback Values
 
