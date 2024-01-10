@@ -6,6 +6,11 @@ Champions: Eemeli Aro (Mozilla/OpenJS Foundation), Daniel Minor (Mozilla)
 
 ### Stage: 1
 
+#### Presentations
+
+- 2022 March: [Stage 1 proposal](https://docs.google.com/presentation/d/1oThTeL_n5-HAfmJTri-i8yU2YtHUvj9AakmWiyRGPlw/edit?usp=sharing)
+- 2023 October: [Stage 1 update](https://docs.google.com/presentation/d/15lwZipk0k5pMscSBbEPpMySsnM_qd4MOo_NqmmKyS-Q/edit?usp=sharing)
+
 ## Motivation
 
 This proposal aims to make it easier to localize the web,
@@ -48,10 +53,10 @@ Using [MF2 syntax], this could be defined as:
 [mf2 syntax]: https://github.com/unicode-org/message-format-wg/blob/develop/spec/syntax.md
 
 ```ini
-match {$count :number}
-when 0 {You have no new notifications}
-when one {You have {$count} new notification}
-when * {You have {$count} new notifications}
+.match {$count :number}
+0   {{You have no new notifications}}
+one {{You have {$count} new notification}}
+*   {{You have {$count} new notifications}}
 ```
 
 Some parts of the full message are explicitly repeated for each case,
@@ -61,7 +66,7 @@ In code, with the API proposed below, this would be used like this:
 
 ```js
 const source = ... // string source of the message as above
-const mf = new Intl.MessageFormat(source, ['en']);
+const mf = new Intl.MessageFormat(source, 'en');
 const notifications = mf.format({ count: 1 });
 // 'You have 1 new notification'
 ```
@@ -71,16 +76,16 @@ those are of course also supported by the proposed API:
 
 ```js
 // A plain message
-const mf1 = new Intl.MessageFormat('{Hello!}', ['en']);
+const mf1 = new Intl.MessageFormat('Hello!', 'en');
 mf1.format(); // 'Hello!'
 
 // A parametric message, formatted to parts
-const mf2 = new Intl.MessageFormat('{Hello {$place}!}', ['en']);
+const mf2 = new Intl.MessageFormat('Hello {$place}!', 'en');
 const greet = mf.formatToParts({ place: 'world' });
 /* [
-  { type: 'literal', value: 'Hello ' },
+  { type: 'text', value: 'Hello ' },
   { type: 'string', source: '$place', value: 'world' },
-  { type: 'literal', value: '!' }
+  { type: 'text', value: '!' }
 ] */
 ```
 
@@ -97,13 +102,30 @@ The other `interface` descriptions below are intended to represent plain objects
 
 ### MessageData
 
-The `MessageData` interface will be defined by
-the MF2 data model developed by the MF2 working group.
+The `MessageData` interface is defined by the
+[MF2 data model](https://github.com/unicode-org/message-format-wg/tree/main/spec/data-model)
+developed by the Unicode MessageFormat working group.
 It contains a parsed representation of a single message for a particular locale.
 
 ```ts
-interface MessageData {}
+type MessageData = PatternMessage | SelectMessage;
+
+interface PatternMessage {
+  type: 'message';
+  declarations: Declaration[];
+  pattern: Pattern;
+}
+
+interface SelectMessage {
+  type: 'select';
+  declarations: Declaration[];
+  selectors: Expression[];
+  variants: Variant[];
+}
 ```
+
+The full and exact definition of the message data model is given by its
+[JSON Schema definition](https://github.com/unicode-org/message-format-wg/blob/main/spec/data-model/message.json).
 
 ### MessageFormat
 
@@ -145,6 +167,20 @@ for the creation of `MessageFormat` instances.
 The `ResolvedMessageFormatOptions` object contains the options
 resolved during the construction of the `MessageFormat` instance.
 
+As messages may contain placeholders resolving to strings with different directionality
+than the message as a whole (as in, left-to-right vs. right-to-left),
+the `bidiIsolation` option defines a strategy
+by which these parts will be isolated from each other in the output to avoid spillover effects.
+The default `'compatibility'` strategy will include Unicode isolate code points
+at the boundaries of all expressions that are not known to match the message's directionality.
+The `'none'` strategy will not provide any bidirectional isolation.
+
+By default the message's directionality is determined from
+the script corresponding to the first locale,
+but this may be overridden by `dir`.
+Its `"auto"` value corresponds to messages with unknown directionality,
+for which the direction is determined by the first strongly directional character.
+
 Custom user-defined message formatting and selection functions may defined by the `functions` option.
 These allow for any data types to be handled by custom functions.
 Such functions may be referenced within messages,
@@ -152,11 +188,15 @@ and then called with the resolved values of their arguments and options.
 
 ```ts
 interface MessageFormatOptions {
+  bidiIsolation?: 'compatibility' | 'none';
+  dir?: 'ltr' | 'rtl' | 'auto';
   functions?: { [key: string]: MessageFunction };
   localeMatcher?: 'best fit' | 'lookup';
 }
 
 interface ResolvedMessageFormatOptions {
+  bidiIsolation: 'compatibility' | 'none';
+  dir: 'ltr' | 'rtl' | 'auto';
   functions: { [key: string]: MessageFunction };
   locales: string[];
   localeMatcher: 'best fit' | 'lookup';
@@ -179,10 +219,31 @@ To determine the value `res` returned by the `format()` method,
 the message is first resolved to a list of MessageValue instances.
 Starting with an empty string `res`, for each MessageValue `mv`:
 
+1. Let `msgDir` be the base direction of the message.
+1. Let `bidiIsolation` be the resolved value of the `bidiIsolation` option.
+1. Let `dir` be `mv.dir`.
 1. Let `strval` be the result of calling `mv.toString()`.
 1. If the call fails or `strval` is not a string:
    1. Set `strval` to be the concatenation of `{`, `mv.source`, and `}`.
-1. Append `strval` to the end of `res`.
+   1. Set `dir` to be `"auto"`.
+1. Let `bidi` be the `{ start: string, end: string }` result of calling
+   `ApplyBidiIsolation(bidiIsolation, msgDir, dir)`.
+1. Append `bidi.start`, `strval`, and `bidi.end` to the end of `res`.
+
+The ApplyBidiIsolation abstract operation will take as arguments
+the current bidi isolation strategy and the message and part directions.
+From these it will determine `start` and `end` as sequences of Unicode code points
+which will, if necessary, isolate parts from each other.
+With the default "compatibility" strategy, the result matches this TS type:
+
+```ts
+type BidiIsolation =
+  | { start: ''; end: '' }
+  | {
+      start: '\u2066' | '\u2067' | '\u2068'; // LRI | RLI | FSI
+      end: '\u2069'; // PDI
+    };
+```
 
 #### formatToParts(values?, onError?)
 
@@ -200,11 +261,21 @@ To determine the value `res` returned by the `formatToParts()` method,
 the message is first resolved to a list of MessageValue instances.
 Starting with an empty array `res`, for each MessageValue `mv`:
 
+1. Let `msgDir` be the base direction of the message.
+1. Let `bidiIsolation` be the resolved value of the `bidiIsolation` option.
+1. Let `dir` be `mv.dir`.
 1. Let `parts` be the result of calling `mv.toParts()`.
 1. If the call fails or `parts` is not an array:
-   1. Set `parts` to be `[{ type: 'fallback', locale: 'und', source: mv.source }]`.
+   1. Set `parts` to be `[{ type: "fallback", source: mv.source }]`.
+   1. Set `dir` to be `"auto"`.
+1. Let `bidi` be the `{ start: string, end: string }` result of calling
+   `ApplyBidiIsolation(bidiIsolation, msgDir, dir)`.
+1. If `bidi.start` is not an empty string:
+   1. Append `{ type: 'bidiIsolation', value: bidi.start }` to `res`.
 1. For each `part` or `parts`:
    1. Append `part` to `res`.
+1. If `bidi.end` is not an empty string:
+   1. Append `{ type: 'bidiIsolation', value: bidi.end }` to `res`.
 
 [fallback representation]: https://github.com/unicode-org/message-format-wg/blob/main/spec/formatting.md#fallback-resolution
 
@@ -220,6 +291,7 @@ though its JavaScript representation is only available to custom functions.
 interface MessageValue {
   type: string;
   locale: string;
+  dir: 'ltr' | 'rtl' | 'auto';
   source: string;
   options?: { [key: string]: unknown };
   selectKeys?: (keys: string[]) => string[];
@@ -229,14 +301,20 @@ interface MessageValue {
 }
 
 type MessagePart =
-  | { type: 'literal'; value: string }
+  | { type: 'text'; value: string }
   | {
+      type: 'bidiIsolation';
+      value: '\u2066' | '\u2067' | '\u2068' | '\u2069'; // LRI | RLI | FSI | PDI
+    }
+  | ({
       type: string;
       source: string;
       locale?: string;
-      parts?: Array<{ type: string; value: unknown }>;
-      value?: unknown;
-    };
+      dir?: 'ltr' | 'rtl' | 'auto';
+    } & (
+      | { value?: unknown }
+      | { parts: Array<{ type: string; value: unknown; source?: string }> }
+    ));
 ```
 
 A `MessageValue` is an object with a string `type`, a string `locale` identifier,
@@ -253,8 +331,8 @@ but user-defined functions may return any number of parts, or none.
 Except for parts corresponding to literal values,
 each `MessagePart` MUST include the `type` and `source` from the `MessageValue`.
 It MAY also include a string `locale` identifier,
-an explicit `value` of any type,
-and/or its own sequence of `parts`.
+and optionally either an explicit `value` of any type
+or its own sequence of `parts`.
 
 In order to be usable as a variant selector,
 the `MessageValue` object MUST include a `selectKeys` method.
@@ -277,23 +355,24 @@ While its resolved value is never presented as JS,
 for the sake of simplicity it may be thought of as having the following resolved value:
 
 ```ts
-interface MessageLiteral {
-  type: 'literal';
-  locale: string;
+interface MessageText {
+  type: 'text';
   source: string;
-  toParts(): [MessageLiteralPart];
+  locale: string;
+  dir: 'ltr' | 'rtl' | 'auto';
+  toParts(): [MessageTextPart];
   toString(): string;
 }
 
-interface MessageLiteralPart {
-  type: 'literal';
+interface MessageTextPart {
+  type: 'text';
   value: string;
 }
 ```
 
-For `MessageLiteral`, the value returned by `toString()` and
+For `MessageText`, the value returned by `toString()` and
 the `value` field of the object returned by `toParts()`
-correspond to the text source.
+corresponding to the text source.
 Its `locale` is always the same as the message's base locale.
 
 #### Expressions
@@ -331,11 +410,21 @@ to complement or replace the default ones.
 
 ```ts
 type MessageFunction = (
-  locales: string[],
+  msgCtx: MessageFunctionContext,
   options: { [key: string]: unknown },
   input?: unknown
 ) => MessageValue;
+
+interface MessageFunctionContext {
+  locales: string[];
+  dir: 'ltr' | 'rtl' | 'auto';
+  source: string;
+}
 ```
+
+The `msgCtx` value defines the context in which the expression is being resolved,
+with the `locales` and `dir` of the whole message
+as well as the `source` fallback string representation of the expression.
 
 The `input` and `options` values are constructed as follows:
 
@@ -386,8 +475,9 @@ Otherwise, un-annotated values resolve to the following shape:
 ```ts
 interface MessageUnknownValue {
   type: 'unknown';
-  locale: string;
   source: string;
+  locale: string;
+  dir: 'ltr' | 'rtl' | 'auto';
   toParts(): [MessageUnknownPart];
   toString(): string;
   valueOf(): unknown;
@@ -447,8 +537,9 @@ Returns a value with the following shape:
 ```ts
 interface MessageNumber {
   type: 'number';
-  locale: string;
   source: string;
+  locale: string;
+  dir: 'ltr' | 'rtl' | 'auto';
   options: Intl.NumberFormatOptions & Intl.PluralRulesOptions;
   selectKeys(keys: string[]): string[];
   toParts(): [MessageNumberPart];
@@ -458,8 +549,9 @@ interface MessageNumber {
 
 interface MessageNumberPart {
   type: 'number';
-  locale: string;
   source: string;
+  locale?: string;
+  dir?: 'ltr' | 'rtl' | 'auto';
   parts: Intl.NumberFormatPart[];
 }
 ```
@@ -495,8 +587,9 @@ Returns a value with the following shape:
 ```ts
 interface MessageString {
   type: 'string';
-  locale: string;
   source: string;
+  locale: string;
+  dir: 'ltr' | 'rtl' | 'auto';
   selectKeys(keys: string[]): [] | [string];
   toParts(): [MessageStringPart];
   toString(): string;
@@ -505,8 +598,9 @@ interface MessageString {
 
 interface MessageStringPart {
   type: 'string';
-  locale: string;
   source: string;
+  locale?: string;
+  dir?: 'ltr' | 'rtl' | 'auto';
   value: string;
 }
 ```
@@ -582,6 +676,7 @@ In such a case, a fallback representation is used instead for the value:
 interface MessageFallback {
   type: 'fallback';
   locale: 'und';
+  dir: 'auto';
   source: string;
   toParts(): [MessageFallbackPart];
   toString(): string;
@@ -598,7 +693,8 @@ that include "reserved" or "private-use" annotations.
 
 The `source` of the `MessageFallback` corresponds to the `source` of the `MessageValue`.
 When `MessageFallback` is formatted to a string,
-its value is the concatenation of `'{'`, the `source` value, and `'}'`.
+its value is the concatenation of a left curly brace `{`, the `source` value,
+and a right curly brace `}`.
 
 ## Comparison
 
