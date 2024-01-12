@@ -750,9 +750,15 @@ contributors: Eemeli Aro
              1. Append _resArg_ to _funcArgs_.
           1. Let _funcRes_ be Completion(Call(_function_, *undefined*, _funcArgs_)).
           1. If _funcRes_ is a normal completion, then
-             1. Let _result_ be OrdinaryObjectCreate(*null*, « [[MessageValue]] »).
-             1. Set _result_.[[MessageValue]] to _funcRes_.[[Value]].
-             1. Return _result_.
+             1. Let _mv_ be _funcRes_.[[Value]].
+             1. If _mv_ is an Object and ? Get(_mv_, *"type"*) is a String and ? Get(_mv_, *"source"*) is a String, then
+                1. Let _result_ be OrdinaryObjectCreate(*null*, « [[MessageValue]] »).
+                1. Set _result_.[[MessageValue]] to _mv_.
+                1. Return _result_.
+             1. Else,
+                1. Let _error_ be ThrowCompletion(*TypeError*).
+                1. Perform ? HandleMessageFormatError(_ctx_, _error_).
+                1. Return ResolveFallback(_source_).
           1. Else,
              1. Perform ? HandleMessageFormatError(_ctx_, _funcRes_).
              1. Return ResolveFallback(_source_).
