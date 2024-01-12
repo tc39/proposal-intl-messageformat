@@ -868,17 +868,18 @@ contributors: Eemeli Aro
         1. If _type_ is *"variable"*, then
            1. Let _name_ be ? Get(_value_, *"name"*).
            1. Let _local_ be ! Get(_ctx_.[[LocalVariables]], _name_).
-           1. If _local_ has an [[UnresolvedDeclaration]] internal slot, then
-              1. Let _decl_ be _local_.[[UnresolvedDeclaration]].
-              1. If ? Get(_decl_, *"type"*) is *"local"*, then
-                 1. Let _declValue_ be ? Get(_decl_, *"value"*).
-                 1. Return ? GetSource(_ctx_, _declValue_).
-           1. Else if _local_ has a [[MessageValue]] internal slot, then
-              1. Return MessageValueSource(_local_.[[MessageValue]]).
-           1. Else,
-              1. Assert: _local_ has a [[ResolvedName]] internal slot.
-              1. Assert: _local_ has a [[ResolvedValue]] internal slot.
-              1. Set _name_ to _local_.[[ResolvedName]].
+           1. If _local_ is an Object, then
+              1. If _local_ has an [[UnresolvedDeclaration]] internal slot, then
+                 1. Let _decl_ be _local_.[[UnresolvedDeclaration]].
+                 1. If ? Get(_decl_, *"type"*) is *"local"*, then
+                    1. Let _declValue_ be ? Get(_decl_, *"value"*).
+                    1. Return ? GetSource(_ctx_, _declValue_).
+              1. Else if _local_ has a [[MessageValue]] internal slot, then
+                 1. Return MessageValueSource(_local_.[[MessageValue]]).
+              1. Else,
+                 1. Assert: _local_ has a [[ResolvedName]] internal slot.
+                 1. Assert: _local_ has a [[ResolvedValue]] internal slot.
+                 1. Set _name_ to _local_.[[ResolvedName]].
            1. Return the string-concatenation of *"$"* and _name_.
         1. If _type_ is *"markup"*, then
            1. Let _kind_ be ? Get(_value_, *"kind"*).
