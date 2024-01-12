@@ -273,49 +273,6 @@ contributors: Eemeli Aro
   <emu-clause id="sec-intl-messageformat-abstracts">
     <h1>Abstract Operations for MessageFormat Objects</h1>
 
-    <emu-clause id="sec-formatmarkuppart" type="abstract operation">
-      <h1>
-        FormatMarkupPart (
-          _mf_: an Object,
-          _values_: an Object or undefined,
-          _onError_: a Function or undefined,
-          _markup_: an Object,
-        ): an Object
-      </h1>
-      <dl class="header">
-        <dt>description</dt>
-        <dd>It resolves the formatted part value of a markup placeholder.</dd>
-      </dl>
-
-      <emu-alg>
-        1. Let _kind_ be ? Get(_markup_, *"kind"*).
-        1. Let _name_ be ? Get(_markup_, *"name"*).
-        1. Let _options_ be ? Get(_markup_, *"options"*).
-        1. Let _part_ be OrdinaryObjectCreate(%Object.prototype%).
-        1. Perform ! CreateDataPropertyOrThrow(_part_, *"type"*, *"markup"*).
-        1. Perform ! CreateDataPropertyOrThrow(_part_, *"kind"*, _kind_).
-        1. Perform ! CreateDataPropertyOrThrow(_part_, *"name"*, _name_).
-        1. If _kind_ is not *"close"* and _options_ is not *undefined*, then
-           1. Let _len_ be ? LengthOfArrayLike(_options_).
-           1. If _len_ > 0, then
-              1. Let _opts_ be ? CreateListFromArrayLike(_options_).
-              1. Let _resOptions_ be OrdinaryObjectCreate(%Object.prototype%).
-              1. For each element _opt_ of _opts_,
-                 1. Let _optName_ be ? Get(_opt_, *"name"*).
-                 1. Let _optValue_ be ? Get(_opt_, *"value"*).
-                 1. Let _resValue_ be ResolveValue(_mf_, _values_, _onError_, _optValue_).
-                 1. If _resValue_ is an Object, then
-                    1. Let _valueOf_ be ? Get(_resValue_, *"valueOf"*).
-                    1. If IsCallable(_valueOf_) is *true*, then
-                       1. Let _rv_ be ? Call(_valueOf_, _resValue_).
-                       1. If IsStrictlyEqual(_rv_, _resValue_) is *false*, then
-                          1. Set _resValue_ to _rv_.
-                 1. Perform ! CreateDataPropertyOrThrow(_resOptions_, _optName_, _resValue_).
-              1. Perform ! CreateDataPropertyOrThrow(_part_, *"options"*, _resOptions_).
-        1. Return CreateArrayFromList(« _part_ »).
-      </emu-alg>
-    </emu-clause>
-
     <emu-clause id="sec-getmessagedata" type="implementation-defined abstract operation">
       <h1>
         GetMessageData (
@@ -459,30 +416,6 @@ contributors: Eemeli Aro
       </emu-alg>
     </emu-clause>
 
-    <emu-clause id="sec-resolvemarkup" type="abstract operation">
-      <h1>
-        ResolveMarkup (
-          _mf_: an Object,
-          _values_: an Object or undefined,
-          _onError_: a Function or undefined,
-          _markup_: an Object,
-        ): an Object
-      </h1>
-      <dl class="header">
-        <dt>description</dt>
-        <dd>It resolves the value of a markup placeholder for formatting.</dd>
-      </dl>
-
-      <emu-alg>
-        1. Let _toParts_ be a function that returns FormatMarkupPart(_mf_, _values_, _onError_, _el_).
-        1. Let _toString_ be a function that returns an empty String.
-        1. Let _mv_ be OrdinaryObjectCreate(%Object.prototype%).
-        1. Perform ! CreateDataPropertyOrThrow(_mv_, *"toParts"*, _toParts_).
-        1. Perform ! CreateDataPropertyOrThrow(_mv_, *"toString"*, _toString_).
-        1. Return _mv_.
-      </emu-alg>
-    </emu-clause>
-
     <emu-clause id="sec-resolvemessage" type="abstract operation">
       <h1>
         ResolveMessage (
@@ -493,7 +426,7 @@ contributors: Eemeli Aro
       </h1>
       <dl class="header">
         <dt>description</dt>
-        <dd>It resolves a message during formatting into a List of Strings and MessageValue Objects.</dd>
+        <dd>It resolves a message during formatting into a List of MessageValue Objects.</dd>
       </dl>
 
       <emu-alg>
@@ -503,41 +436,9 @@ contributors: Eemeli Aro
            1. If _el_ is a String, then
               1. Append _el_ to _result_.
            1. Else,
-              1. Let _elType_ be ? Get(_el_, *"type"*).
-              1. If _elType_ is *"markup"*, then
-                1. Let _mv_ be ResolveMarkup(_mf_, _values_, _onError_, _el_).
-              1. Else,
-                1. Assert: _elType_ is *"expression"*.
-                1. Let _mv_ be ResolveExpression(_mf_, _values_, _onError_, _el_).
+              1. Let _mv_ be ResolveExpression(_mf_, _values_, _onError_, _el_).
               1. Append _mv_ to _result_.
         1. Return _result_.
-      </emu-alg>
-    </emu-clause>
-
-    <emu-clause id="sec-resolvevalue" type="abstract operation">
-      <h1>
-        ResolveValue (
-          _mf_: an Object,
-          _values_: an Object or undefined,
-          _onError_: a Function or undefined,
-          _value_: an Object,
-        ): an ECMAScript language value
-      </h1>
-      <dl class="header">
-        <dt>description</dt>
-        <dd>
-          It resolves the value of a literal or variable reference.
-          For literals, the returned value is always a String.
-          For variable references, the returned value may be any ECMAScript language value.
-        </dd>
-      </dl>
-
-      <emu-alg>
-        1. Let _type_ be ? Get(_value_, *"type"*).
-        1. If _type_ is *"literal"*, return ? Get(_value_, *"value"*).
-        1. Assert: _type_ is *"variable"*.
-        1. Let _name_ be ? Get(_value_, *"name"*).
-        1. ...TODO
       </emu-alg>
     </emu-clause>
 
