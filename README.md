@@ -414,8 +414,8 @@ within the formatter each is only considered by itself,
 and any higher-level validation is the responsibility of the caller.
 
 A markup placeholder cannot be used as a selector.
-In `format()`, all markup is effectively ignored, each formatting to an empty string.
-In `formatToParts()`, each markup placeholder formats to one part:
+In `format()`, all markup is ignored, with each being formatted to an empty string.
+In `formatToParts()`, each markup placeholder is formatted to a single part:
 
 ```ts
 interface MessageMarkupPart {
@@ -439,10 +439,9 @@ of the options included in the placeholder.
 For example, when formatting `{#open foo=42 bar=$baz}` with `formatToParts({ baz: 13 })`,
 the formatted part's `options` would be `{ foo: '42', bar: 13 }`.
 For options with variable reference values,
-if the resolved value is an object with a `valueOf()` method that does not return the object itself,
-the returned value is used.
-The `options` are never included for a "close" markup placeholder,
-as they are only supported for "open" and "standalone".
+if the resolved value is an object with a `valueOf()` method, the returned value is used.
+The `options` are only supported for "open" and "standalone" markup placeholders
+and are never included for a "close" markup placeholder.
 
 ### MessageFunction
 
