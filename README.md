@@ -406,8 +406,9 @@ Markup placeholders take three different forms:
 - "open" markup that starts a markup span, and
 - "close" markup that end a markup span.
 
-The syntax used by markup corresponds to that of XML,
-though with `#` as a prefix for "standalone" and "open": `{#img /}`, `{#b}`, `{/b}`.
+The syntax used by markup is somewhat similar to that of XML,
+though with curly braces `{}` instead of angle brackets `<>` and
+with `#` as a prefix for "standalone" and "open": `{#img /}`, `{#b}`, `{/b}`.
 
 Markup placeholders are not required to be paired or nest cleanly;
 within the formatter each is only considered by itself,
