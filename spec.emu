@@ -141,11 +141,11 @@ contributors: Eemeli Aro
         1. Let _msg_ be ? ResolveMessage(_ctx_).
         1. Let _result_ be an empty String.
         1. For each element _el_ of _msg_, do
-           1. If _el_ is a String, then
+           1. If Type(_el_) is String, then
               1. Let _stringValue_ be _el_.
-           1. Else if _el_ has a [[MessageValue]] internal slot, then
+           1. Else if Type(_el_) is Object and _el_ has a [[MessageValue]] internal slot, then
               1. Let _mv_ be _el_.[[MessageValue]].
-              1. Assert: _mv_ is an Object.
+              1. Assert: Type(_mv_) is Object.
               1. Let _toString_ be ? Get(_mv_, *"toString"*).
               1. Let _toStringResult_ be Completion(Call(_toString_, _mv_)).
               1. If _toStringResult_ is a normal completion, then
@@ -172,19 +172,20 @@ contributors: Eemeli Aro
         1. Perform ? RequireInternalSlot(_mf_, [[InitializedMessageFormat]]).
         1. Let _ctx_ be ? CreateMessageFormatContext(_mf_, _values_, _onError_).
         1. Let _msg_ be ? ResolveMessage(_ctx_).
-        1. Let _result_ be an empty List of Objects.
+        1. Let _result_ be a new empty List.
         1. For each element _mv_ of _msg_, do
-           1. If _el_ is a String, then
+           1. If Type(_el_) is String, then
               1. Let _textPart_ be OrdinaryObjectCreate(%Object.prototype%).
               1. Perform ! CreateDataPropertyOrThrow(_textPart_, *"type"*, *"text"*).
               1. Perform ! CreateDataPropertyOrThrow(_textPart_, *"value"*, _el_).
               1. Append _textPart_ to _result_.
-           1. Else if _el_ has a [[MessageMarkup]] internal slot, then
+           1. Else if Type(_el_) is Object and _el_ has a [[MessageMarkup]] internal slot, then
               1. Let _markup_ be ? FormatMarkupPart(_ctx_, _el_.[[MessageMarkup]]).
               1. Append _markup_ to _result_
            1. Else,
+              1. Assert: _el_ has a [[MessageValue]] internal slot.
               1. Let _mv_ be _el_.[[MessageValue]].
-              1. Assert: _mv_ is an Object.
+              1. Assert: Type(_mv_) is Object.
               1. Let _toParts_ be ? Get(_mv_, *"toParts"*).
               1. Let _partResult_ be Completion(Call(_toParts_, _mv_)).
               1. If _partResult_ is a normal completion, then
@@ -353,21 +354,21 @@ contributors: Eemeli Aro
           1. Let _source_ be ! Get(_funcCtx_, *"source"*).
           1. Let _opts_ be OrdinaryObjectCreate(%Object.prototype%).
           1. Perform ! CreateDataPropertyOrThrow(_opt_, *"localeMatcher"*, _localeMatcher_).
-          1. If _input_ is a String, then
+          1. If Type(_input_) is String, then
              1. Set _input_ to ? Call(JSON.parse, %JSON%, « _input_ »).
-          1. Else if _input_ is an Object, then
+          1. Else if Type(_input_) is Object, then
              1. Let _valueOf_ be ? Get(_input_, *"valueOf"*).
              1. If IsCallable(_valueOf_) is *true*, then
                 1. Let _inputOptions_ be ? Get(_input_, *"options"*).
                 1. Perform ? Call(Object.assign, *undefined*, « _opts_, _inputOptions_ »).
                 1. Set _input_ to ? Call(_valueOf_, _input_).
-          1. If _input_ is not a Number and _input_ is not a BigInt, throw a *TypeError* exception.
+          1. If Type(_input_) is not Number or BigInt, throw a *TypeError* exception.
           1. Let _numberOptions_ be « *"minimumIntegerDigits"*, *"minimumFractionDigits"*, *"maximumFractionDigits"*, *"minimumSignificantDigits"*, *"maximumSignificantDigits"*, *"roundingIncrement"* ».
           1. Let _booleanOptions_ be « *"useGrouping"* ».
           1. Let _select_ be *"cardinal"*.
           1. For each String _optName_ of ? EnumerableOwnProperties(_options_, ~key~),
              1. If _optName_ is not *"localeMatcher"* and _optName_ is not *"type"*, then
-                1. If _optValue_ is an Object, then
+                1. If Type(_optValue_) is Object, then
                    1. Let _optValueOf_ be ? Get(_optValue_, *"valueOf"*).
                    1. If IsCallable(_optValueOf_) is *true*, then
                       1. Set _optValue__ to ? Call(_optValueOf_, _optValue_).
@@ -377,7 +378,7 @@ contributors: Eemeli Aro
                    1. Else if _optValue_ is not *"plural"*, then
                       1. Throw a *RangeError* exception.
                 1. Else,
-                   1. If _optValue_ is a String, then
+                   1. If Type(_optValue_) is String, then
                       1. If _numberOptions_ contains _optName_, then
                          1. Set _optValue_ to ToNumber(_optValue_).
                       1. Else if _booleanOptions_ contains _optName_, then
@@ -574,7 +575,7 @@ contributors: Eemeli Aro
         1. Let _result_ be an empty List.
         1. Let _pattern_ be ? SelectPattern(_ctx_).
         1. For each element _el_ of _pattern_,
-           1. If _el_ is a String, then
+           1. If Type(_el_) is String, then
               1. Append _el_ to _result_.
            1. Else,
               1. Let _elType_ be ? Get(_el_, *"type"*).
@@ -684,13 +685,13 @@ contributors: Eemeli Aro
         1. Let _annotation_ be ? Get(_expression_, *"annotation"*).
         1. If _annotation_ is *undefined*, then
            1. Assert: _resArg_ is not *undefined*.
-           1. If _resArg_ is an Object and _resArg_ has a [[MessageValue]] internal slot, then
+           1. If Type(_resArg_) is Object and _resArg_ has a [[MessageValue]] internal slot, then
               1. Return _resArg_.
-           1. Else if _resArg_ is a Number or _resArg_ is a BigInt, then
+           1. Else if Type(_resArg_) is Number or BigInt, then
               1. Set _annotation_ to OrdinaryObjectCreate(*null*).
               1. Perform ! CreateDataPropertyOrThrow(_annotation_, *"type"*, *"function"*).
               1. Perform ! CreateDataPropertyOrThrow(_annotation_, *"name"*, *"number"*).
-           1. Else if _resArg_ is a String, then
+           1. Else if Type(_resArg_) is String, then
               1. Set _annotation_ to OrdinaryObjectCreate(*null*).
               1. Perform ! CreateDataPropertyOrThrow(_annotation_, *"type"*, *"function"*).
               1. Perform ! CreateDataPropertyOrThrow(_annotation_, *"name"*, *"string"*).
@@ -736,7 +737,7 @@ contributors: Eemeli Aro
                 1. Let _optName_ be ? Get(_opt_, *"name"*).
                 1. Let _optValue_ be ? Get(_opt_, *"value"*).
                 1. Let _resValue_ be ResolveValue(_ctx_, _optValue_).
-                1. If _resValue_ is an Object, then
+                1. If Type(_resValue_) is Object, then
                    1. If _resValue_ has a [[MessageFallback]] internal slot, then
                       1. Set _resValue_ to *undefined*.
                    1. Else if _resValue_ has a [[MessageValue]] internal slot, then
@@ -744,14 +745,14 @@ contributors: Eemeli Aro
                 1. Perform ? CreateDataPropertyOrThrow(_options_, _optName_, _resValue_).
              1. Perform ! CreateDataPropertyOrThrow(_part_, *"options"*, _resOptions_).
           1. Let _funcArgs_ be « _funcCtx_, _options_ ».
-          1. If _resArg_ is an Object and _resArg_ has a [[MessageValue]] internal slot, then
+          1. If Type(_resArg_) is Object and _resArg_ has a [[MessageValue]] internal slot, then
              1. Set _resArg_ to _resArg_.[[MessageValue]].
           1. If _resArg_ is not *undefined*, then
              1. Append _resArg_ to _funcArgs_.
           1. Let _funcRes_ be Completion(Call(_function_, *undefined*, _funcArgs_)).
           1. If _funcRes_ is a normal completion, then
              1. Let _mv_ be _funcRes_.[[Value]].
-             1. If _mv_ is an Object and ? Get(_mv_, *"type"*) is a String and ? Get(_mv_, *"source"*) is a String, then
+             1. If Type(_mv_) is Object and Type(? Get(_mv_, *"type"*)) is String and Type(? Get(_mv_, *"source"*)) is String, then
                 1. Let _result_ be OrdinaryObjectCreate(*null*, « [[MessageValue]] »).
                 1. Set _result_.[[MessageValue]] to _mv_.
                 1. Return _result_.
@@ -834,7 +835,7 @@ contributors: Eemeli Aro
                  1. Let _optName_ be ? Get(_opt_, *"name"*).
                  1. Let _optValue_ be ? Get(_opt_, *"value"*).
                  1. Let _resValue_ be ResolveValue(_ctx_, _optValue_).
-                 1. If _resValue_ is an Object, then
+                 1. If Type(_resValue_) is Object, then
                     1. If _resValue_ has a [[MessageFallback]] internal slot, then
                        1. Set _resValue_ to *undefined*.
                     1. Else,
@@ -874,7 +875,7 @@ contributors: Eemeli Aro
         1. If _type_ is *"variable"*, then
            1. Let _name_ be ? Get(_value_, *"name"*).
            1. Let _local_ be ! Get(_ctx_.[[LocalVariables]], _name_).
-           1. If _local_ is an Object, then
+           1. If Type(_local_) is Object, then
               1. If _local_ has an [[UnresolvedDeclaration]] internal slot, then
                  1. Let _decl_ be _local_.[[UnresolvedDeclaration]].
                  1. If ? Get(_decl_, *"type"*) is *"local"*, then
@@ -917,7 +918,7 @@ contributors: Eemeli Aro
           <dd>
             It gets the source string representation of a resolved message value,
             which should be always available.
-            On any error, return the Unicode replacement character � instead.
+            On any error, it returns the Unicode replacement character � instead.
           </dd>
         </dl>
 
@@ -925,7 +926,7 @@ contributors: Eemeli Aro
           1. Let _source_ be Completion(Get(_mv_, *"source"*)).
           1. If _source_ is a normal completion, then
              1. Let _str_ be _source_.[[Value]].
-             1. If _str_ is a String, then
+             1. If Type(_str_) is String, then
                 1. Return _str_.
           1. Return *"\uFFFD"*.
         </emu-alg>
@@ -1059,7 +1060,7 @@ contributors: Eemeli Aro
               1. Set _resolved_.[[ResolvedValue]] to _var_.
               1. Perform ! Set(_localVars_, _name_, _resolved_).
         1. Else,
-           1. Assert: _var_ is an Object.
+           1. Assert: Type(_var_) is Object.
            1. If _var_ has a [[ResolvedValue]] internal slot, then
               1. Set _var_ to _var_.[[ResolvedValue]].
            1. Else if _var_ has an [[UnresolvedDeclaration]] internal slot, then
