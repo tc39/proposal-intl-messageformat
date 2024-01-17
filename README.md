@@ -393,6 +393,57 @@ using the constructor's `functions` option,
 which takes `MessageFunction` function values that are applied when
 the annotation's name (without the `:`) corresponds to the `functions` key.
 
+#### Markup
+
+In addition to expressions, placeholders may also be markup;
+content corresponding to HTML elements or other markup syntax.
+Unlike expressions, markup does not accept a positional input argument
+and its resolution is not customizable by the `functions` option.
+
+Markup placeholders take three different forms:
+
+- "standalone" markup for non-textual content such as inline images,
+- "open" markup that starts a markup span, and
+- "close" markup that end a markup span.
+
+The syntax used by markup is somewhat similar to that of XML,
+though with curly braces `{}` instead of angle brackets `<>` and
+with `#` as a prefix for "standalone" and "open": `{#img /}`, `{#b}`, `{/b}`.
+
+Markup placeholders are not required to be paired or nest cleanly;
+within the formatter each is only considered by itself,
+and any higher-level validation is the responsibility of the caller.
+
+A markup placeholder cannot be used as a selector.
+In `format()`, all markup is ignored, with each being formatted to an empty string.
+In `formatToParts()`, each markup placeholder is formatted to a single part:
+
+```ts
+interface MessageMarkupPart {
+  type: 'markup';
+  kind: 'open' | 'standalone' | 'close';
+  source: string;
+  name: string;
+  options?: { [key: string]: unknown };
+}
+```
+
+The `type` of the part is always `"markup"`,
+and its `kind` is one of `"open"`, `"standalone"`, or `"close"`.
+The `name` matches the name of the markup,
+without the `#` or `/` prefixes or suffixes.
+The `source` matches the `name` of the markup placeholder,
+prefixed and suffixed with the appropriate `#` and `/` characters.
+
+The `options` correspond to the resolved literal and variable values
+of the options included in the placeholder.
+For example, when formatting `{#open foo=42 bar=$baz}` with `formatToParts({ baz: 13 })`,
+the formatted part's `options` would be `{ foo: '42', bar: 13 }`.
+For options with variable reference values,
+if the resolved value is an object with a `valueOf()` method, the returned value is used.
+The `options` are only supported for "open" and "standalone" markup placeholders
+and are never included for a "close" markup placeholder.
+
 ### MessageFunction
 
 Fundamentally, messages are formed by concatenating values together.
@@ -631,7 +682,7 @@ interface MessageFallbackPart {
 ```
 
 This representation is also used when resolving MF2 expressions
-that include "markup", "reserved" or "private-use" annotations.
+that include "reserved" or "private-use" annotations.
 
 The `source` of the `MessageFallback` corresponds to the `source` of the `MessageValue`.
 When `MessageFallback` is formatted to a string,
