@@ -174,7 +174,7 @@ contributors: Eemeli Aro
         1. Let _msg_ be ? ResolveMessage(_ctx_).
         1. Let _result_ be a new empty List.
         1. For each element _mv_ of _msg_, do
-           1. If Type(_el_) is String, then
+           1. If Type(_mv_) is String, then
               1. Let _textPart_ be OrdinaryObjectCreate(%Object.prototype%).
               1. Perform ! CreateDataPropertyOrThrow(_textPart_, *"type"*, *"text"*).
               1. Perform ! CreateDataPropertyOrThrow(_textPart_, *"value"*, _el_).
@@ -578,6 +578,7 @@ contributors: Eemeli Aro
            1. If Type(_el_) is String, then
               1. Append _el_ to _result_.
            1. Else,
+              1. Assert: Type(_el_) is Object.
               1. Let _elType_ be ? Get(_el_, *"type"*).
               1. If _elType_ is *"markup"*, then
                 1. Let _res_ be OrdinaryObjectCreate(*null*, « [[MessageMarkup]] »).
@@ -609,7 +610,7 @@ contributors: Eemeli Aro
              1. Assert: _msgType_ is *"select"*.
              1. Let _selectorsData_ be ? Get(_msgData_, *"selectors"*).
              1. Let _selectorExpressions_ be ? CreateListFromArrayLike(_selectorsData_, &laquo; Object &raquo;).
-             1. Let _selectors_ be an empty List of Object and Null values.
+             1. Let _selectors_ be an empty List.
              1. For each element _selExp_ of _selectorExpressions_,
                 1. Let _sel_ be ResolveExpression(_ctx_, _selExp_).
                 1. Let _selectKey_ be ? Get(_sel_.[[MessageValue]], *"selectKey"*).
