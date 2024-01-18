@@ -137,19 +137,23 @@ contributors: Eemeli Aro
       <emu-alg>
         1. Let _mf_ be the *this* value.
         1. Perform ? RequireInternalSlot(_mf_, [[InitializedMessageFormat]]).
-        1. Let _msg_ be ? ResolveMessage(_mf_, _values_, _onError_).
+        1. Let _ctx_ be ? CreateMessageFormatContext(_mf_, _values_, _onError_).
+        1. Let _msg_ be ? ResolveMessage(_ctx_).
         1. Let _result_ be an empty String.
-        1. For each element _mv_ of _msg_, do
-           1. If _mv_ is a String, then
-              1. Let _stringValue_ be _mv_.
-           1. Else,
+        1. For each element _el_ of _msg_, do
+           1. If Type(_el_) is String, then
+              1. Let _stringValue_ be _el_.
+           1. Else if Type(_el_) is Object and _el_ has a [[MessageValue]] internal slot, then
+              1. Let _mv_ be _el_.[[MessageValue]].
+              1. Assert: Type(_mv_) is Object.
               1. Let _toString_ be ? Get(_mv_, *"toString"*).
               1. Let _toStringResult_ be Completion(Call(_toString_, _mv_)).
               1. If _toStringResult_ is a normal completion, then
                  1. Let _stringValue_ be _toStringResult_.[[Value]].
               1. Else,
-                 1. Perform ? HandleMessageFormatError(_onError_, _stringResult_).
-                 1. Let _stringValue_ be MessageFallbackString(_mv_).
+                 1. Perform ? HandleMessageFormatError(_ctx_, _stringResult_).
+                 1. Let _source_ be MessageValueSource(_mv_).
+                 1. Let _stringValue_ be MessageFallbackString(_source_).
            1. Set _result_ to the string-concatenation of _result_ and _stringValue_.
         1. Return _result_.
       </emu-alg>
@@ -166,23 +170,31 @@ contributors: Eemeli Aro
       <emu-alg>
         1. Let _mf_ be the *this* value.
         1. Perform ? RequireInternalSlot(_mf_, [[InitializedMessageFormat]]).
-        1. Let _msg_ be ? ResolveMessage(_mf_, _values_, _onError_).
-        1. Let _result_ be an empty List of Objects.
+        1. Let _ctx_ be ? CreateMessageFormatContext(_mf_, _values_, _onError_).
+        1. Let _msg_ be ? ResolveMessage(_ctx_).
+        1. Let _result_ be a new empty List.
         1. For each element _mv_ of _msg_, do
-           1. If _mv_ is a String, then
+           1. If Type(_mv_) is String, then
               1. Let _textPart_ be OrdinaryObjectCreate(%Object.prototype%).
               1. Perform ! CreateDataPropertyOrThrow(_textPart_, *"type"*, *"text"*).
-              1. Perform ! CreateDataPropertyOrThrow(_textPart_, *"value"*, _mv_).
+              1. Perform ! CreateDataPropertyOrThrow(_textPart_, *"value"*, _el_).
               1. Append _textPart_ to _result_.
+           1. Else if Type(_el_) is Object and _el_ has a [[MessageMarkup]] internal slot, then
+              1. Let _markup_ be ? FormatMarkupPart(_ctx_, _el_.[[MessageMarkup]]).
+              1. Append _markup_ to _result_
            1. Else,
+              1. Assert: _el_ has a [[MessageValue]] internal slot.
+              1. Let _mv_ be _el_.[[MessageValue]].
+              1. Assert: Type(_mv_) is Object.
               1. Let _toParts_ be ? Get(_mv_, *"toParts"*).
               1. Let _partResult_ be Completion(Call(_toParts_, _mv_)).
               1. If _partResult_ is a normal completion, then
                  1. Let _parts_ be _partResult_.[[Value]].
-                 1. For each _part_ of _parts_, append _part_ to _result_.
+                 1. For each element _part_ of _parts_, append _part_ to _result_.
               1. Else,
-                 1. Perform ? HandleMessageFormatError(_onError_, _partResult_).
-                 1. Let _fallbackPart_ be MessageFallbackPart(_mv_).
+                 1. Perform ? HandleMessageFormatError(_ctx_, _partResult_).
+                 1. Let _source_ be MessageValueSource(_mv_).
+                 1. Let _fallbackPart_ be MessageFallbackPart(_source_).
                  1. Append _fallbackPart_ to _result_.
         1. Return CreateArrayFromList(_result_).
       </emu-alg>
@@ -260,13 +272,17 @@ contributors: Eemeli Aro
         [[LocaleMatcher]] is one of the String values *"lookup"* or *"best fit"*,
         identifying the locale matcher used.
       </li>
-      <li>[[MessageData]] is an Object ...TODO</li>
+      <li>
+        [[MessageData]] is an Object conforming to the
+        <a href="https://github.com/unicode-org/message-format-wg/blob/main/spec/data-model/message.json">JSON Schema definition</a>
+        of the Unicode MessageFormat 2.0 specification.
+      </li>
       <li>
         [[RequestedLocales]] is a List of String values
         with the canonicalized language tags of the requested locales
         to use for message formatting.
       </li>
-      <li>[[Functions]] is an Object ...TODO</li>
+      <li>[[Functions]] is an Object with function object values.</li>
     </ul>
   </emu-clause>
 
@@ -299,7 +315,7 @@ contributors: Eemeli Aro
       <h1>
         GetMessageFunctions (
           _userFunctions_: an Object or undefined,
-        ): a Record
+        ): an Object
       </h1>
       <dl class="header">
         <dt>description</dt>
@@ -307,14 +323,621 @@ contributors: Eemeli Aro
       </dl>
 
       <emu-alg>
-        1. ...TODO
+        1. Let _numberSteps_ be the algorithm steps defined in <emu-xref href="#sec-messageformat-numberfunctions"></emu-xref>.
+        1. Let _number_ be CreateBuiltinFunction(_numberSteps_, *3*, *"number"*, « »).
+        1. Let _stringSteps_ be the algorithm steps defined in <emu-xref href="#sec-messageformat-stringfunctions"></emu-xref>.
+        1. Let _string_ be CreateBuiltinFunction(_stringSteps_, *3*, *"string"*, « »).
+        1. Let _functions_ be OrdinaryObjectCreate(%Object.prototype%).
+        1. Perform ! CreateDataPropertyOrThrow(_functions_, *"number"*, _number_).
+        1. Perform ! CreateDataPropertyOrThrow(_functions_, *"string"*, _string_).
+        1. For each String _name_ of ? EnumerableOwnProperties(_userFunctions_, ~key~),
+           1. Let _func_ be ? Get(_userFunctions_, _name_).
+           1. If IsCallable(_func_) is *true*, then
+              1. Perform ! CreateDataPropertyOrThrow(_functions_, _name_, _func_).
+           1. Else,
+              1. Throw a *TypeError* exception.
+        1. Return _functions_.
       </emu-alg>
+
+      <emu-clause id="sec-messageformat-numberfunctions">
+        <h1>MessageFormat Number Functions</h1>
+        <p>
+          A MessageFormat number function is an anonymous built-in function.
+        </p>
+        <p>
+          When a MessageFormat number function is called with arguments _funcCtx_ (an Object), _options_ (an Object), and _input_ (an ECMAScript language value), the following steps are taken:
+        </p>
+
+        <emu-alg>
+          1. Let _locale_ be ! Get(_funcCtx_, *"locale"*).
+          1. Let _localeMatcher_ be ! Get(_funcCtx_, *"localeMatcher"*).
+          1. Let _source_ be ! Get(_funcCtx_, *"source"*).
+          1. Let _opts_ be OrdinaryObjectCreate(%Object.prototype%).
+          1. Perform ! CreateDataPropertyOrThrow(_opt_, *"localeMatcher"*, _localeMatcher_).
+          1. If Type(_input_) is String, then
+             1. Set _input_ to ? Call(JSON.parse, %JSON%, « _input_ »).
+          1. Else if Type(_input_) is Object, then
+             1. Let _valueOf_ be ? Get(_input_, *"valueOf"*).
+             1. If IsCallable(_valueOf_) is *true*, then
+                1. Let _inputOptions_ be ? Get(_input_, *"options"*).
+                1. Perform ? Call(Object.assign, *undefined*, « _opts_, _inputOptions_ »).
+                1. Set _input_ to ? Call(_valueOf_, _input_).
+          1. If Type(_input_) is not Number or BigInt, throw a *TypeError* exception.
+          1. Let _numberOptions_ be « *"minimumIntegerDigits"*, *"minimumFractionDigits"*, *"maximumFractionDigits"*, *"minimumSignificantDigits"*, *"maximumSignificantDigits"*, *"roundingIncrement"* ».
+          1. Let _booleanOptions_ be « *"useGrouping"* ».
+          1. Let _select_ be *"cardinal"*.
+          1. For each String _optName_ of ? EnumerableOwnProperties(_options_, ~key~),
+             1. If _optName_ is not *"localeMatcher"* and _optName_ is not *"type"*, then
+                1. If Type(_optValue_) is Object, then
+                   1. Let _optValueOf_ be ? Get(_optValue_, *"valueOf"*).
+                   1. If IsCallable(_optValueOf_) is *true*, then
+                      1. Set _optValue__ to ? Call(_optValueOf_, _optValue_).
+                1. If _optName_ is *"select"*, then
+                   1. If _optValue_ is *"ordinal"* or _optValue_ is *"exact"*, then
+                      1. Set _select_ to _optValue_
+                   1. Else if _optValue_ is not *"plural"*, then
+                      1. Throw a *RangeError* exception.
+                1. Else,
+                   1. If Type(_optValue_) is String, then
+                      1. If _numberOptions_ contains _optName_, then
+                         1. Set _optValue_ to ToNumber(_optValue_).
+                      1. Else if _booleanOptions_ contains _optName_, then
+                         1. If _optValue_ is *"true"*, then
+                            1. Set _optValue_ to *true*.
+                         1. Else if _optValue_ is *"false"*, then
+                            1. Set _optValue_ to *false*.
+                   1. Perform ? Set(_opts_, _optName_, _optValue_, *true*).
+          1. Let _numberFormat_ be ? Construct(%Intl.NumberFormat%, « _locale_, _opts_ »).
+          1. If _select_ is *"exact"*, then
+             1. Perform ? _opts_.[[Delete]](*"type"*).
+             1. Let _pluralRules_ be *undefined*.
+          1. Else,
+             1. Perform ? Set(_opts_, *"type"*, _select_, *true*).
+             1. Let _pluralRules_ be ? Construct(%Intl.PluralRules%, « _locale_, _opts_ »).
+          1. Let _selectKeyClosure_ be a new Abstract Closure with parameters (_keys_) that captures _input_ and _pluralRules_ and performs the following steps when called:
+             1. Let _keyList_ be ? CreateListFromArrayLike(_keys_, « String »).
+             1. Let _str_ be ? ToString(_input_).
+             1. If _keyList_ contains _str_, return _str_.
+             1. If _pluralRules_ is not *undefined*, then
+                1. Let _category_ be ? Call(Intl.PluralRules.prototype.select, _pluralRules_, « _input_ »).
+                1. If _keyList_ contains _category_, return _category_.
+             1. Return *null*.
+          1. Let _selectKey_ be CreateBuiltinFunction(_selectKeyClosure_, *1*, *"selectKey"*, « »).
+          1. Let _toPartsClosure_ be a new Abstract Closure with no parameters that captures _input_, _source_, and _numberFormat_ and performs the following steps when called:
+             1. Let _parts_ be ? Call(Intl.NumberFormat.prototype.formatToParts, _nf_, « _input_ »).
+             1. Let _result_ be OrdinaryObjectCreate(%Object.prototype%).
+             1. Perform ! CreateDataPropertyOrThrow(_result_, *"type"*, *"number"*).
+             1. Perform ! CreateDataPropertyOrThrow(_result_, *"source"*, _source_).
+             1. Perform ! CreateDataPropertyOrThrow(_result_, *"locale"*, _numberFormat_.[[Locale]]).
+             1. Perform ! CreateDataPropertyOrThrow(_result_, *"parts"*, _parts_).
+             1. Return CreateArrayFromList(« _result_ »).
+          1. Let _toParts_ be CreateBuiltinFunction(_toPartsClosure_, *0*, *"toParts"*, « »).
+          1. Let _toStringClosure_ be a new Abstract Closure with no parameters that captures _input_ and _numberFormat_ and performs the following steps when called:
+             1. Return ? Call(Intl.NumberFormat.prototype.format, _nf_, « _input_ »).
+          1. Let _toString_ be CreateBuiltinFunction(_toStringClosure_, *0*, *"toString"*, « »).
+          1. Let _valueOfClosure_ be a new Abstract Closure with no parameters that captures _input_ and performs the following steps when called:
+             1. Return _input_.
+          1. Let _valueOf_ be CreateBuiltinFunction(_valueOfClosure_, *0*, *"valueOf"*, « »).
+          1. Let _mv_ be OrdinaryObjectCreate(%Object.prototype%).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"type"*, *"number"*).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"source"*, _source_).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"locale"*, _numberFormat_.[[Locale]]).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"options"*, _opts_).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"selectKey"*, _selectKey_).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"toParts"*, _toParts_).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"toString"*, _toString_).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"valueOf"*, _valueOf_).
+          1. Return _mv_.
+        </emu-alg>
+
+        <p>
+          The *"length"* property of a MessageFormat number function is *3*.
+        </p>
+      </emu-clause>
+
+      <emu-clause id="sec-messageformat-stringfunctions">
+        <h1>MessageFormat String Functions</h1>
+        <p>
+          A MessageFormat string function is an anonymous built-in function.
+        </p>
+        <p>
+          When a MessageFormat string function is called with arguments _funcCtx_ (an Object), _options_ (an Object), and _input_ (an ECMAScript language value), the following steps are taken:
+        </p>
+
+        <emu-alg>
+          1. Let _str_ be ? ToString(_input_).
+          1. Let _selectKeyClosure_ be a new Abstract Closure with parameters (_keys_) that captures _str_ and performs the following steps when called:
+             1. Let _keyList_ be ? CreateListFromArrayLike(_keys_, « String »).
+             1. If _keyList_ contains _str_, return _str_.
+             1. Else, return *null*.
+          1. Let _selectKey_ be CreateBuiltinFunction(_selectKeyClosure_, *1*, *"selectKey"*, « »).
+          1. Let _toPartsClosure_ be a new Abstract Closure with no parameters that captures _funcCtx_ and _str_ and performs the following steps when called:
+             1. Let _source_ be ! Get(_funcCtx_, *"source"*).
+             1. Let _locale_ be ! Get(_funcCtx_, *"locale"*).
+             1. Let _locale0_ be ! Get(_locale_, *"0"*).
+             1. Let _result_ be OrdinaryObjectCreate(%Object.prototype%).
+             1. Perform ! CreateDataPropertyOrThrow(_result_, *"type"*, *"string"*).
+             1. Perform ! CreateDataPropertyOrThrow(_result_, *"source"*, _source_).
+             1. Perform ! CreateDataPropertyOrThrow(_result_, *"locale"*, _locale0_).
+             1. Perform ! CreateDataPropertyOrThrow(_result_, *"value"*, _str_).
+             1. Return CreateArrayFromList(« _result_ »).
+          1. Let _toParts_ be CreateBuiltinFunction(_toPartsClosure_, *0*, *"toParts"*, « »).
+          1. Let _toStringClosure_ be a new Abstract Closure with no parameters that captures _str_ and performs the following steps when called:
+             1. Return _str_.
+          1. Let _toString_ be CreateBuiltinFunction(_toStringClosure_, *0*, *"toString"*, « »).
+          1. Let _valueOf_ be CreateBuiltinFunction(_toStringClosure_, *0*, *"valueOf"*, « »).
+          1. Let _mv_ be OrdinaryObjectCreate(%Object.prototype%).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"type"*, *"number"*).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"source"*, _source_).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"locale"*, _numberFormat_.[[Locale]]).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"options"*, _opts_).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"selectKey"*, _selectKey_).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"toParts"*, _toParts_).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"toString"*, _toString_).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"valueOf"*, _valueOf_).
+          1. Return _mv_.
+        </emu-alg>
+
+        <p>
+          The *"length"* property of a MessageFormat string function is *3*.
+        </p>
+      </emu-clause>
+    </emu-clause>
+
+    <emu-clause id="sec-createmessageformatcontext" type="abstract operation">
+      <h1>
+        CreateMessageFormatContext (
+          _mf_: an Object,
+          _values_: an Object or undefined,
+          _onError_: a Function or undefined
+        ): a MessageFormatContext Record
+      </h1>
+      <dl class="header">
+        <dt>description</dt>
+        <dd>It initializes the MessageFormatContext Record used for pattern selection and formatting.</dd>
+      </dl>
+
+      <emu-alg>
+        1. Let _localVars_ be OrdinaryObjectCreate(*null*).
+        1. Let _msgData_ be _mf_.[[MessageData]].
+        1. Let _declArray_ be ? Get(_msgData_, *"declarations"*).
+        1. Let _declList_ be ? CreateListFromArrayLike(_declArray_).
+        1. For each element _decl_ of _declList_,
+           1. Let _declName_ be ? Get(_decl_, *"name"*).
+           1. Let _declValue_ be OrdinaryObjectCreate(*null*, « [[UnresolvedDeclaration]] »).
+           1. Set _declValue_.[[UnresolvedDeclaration]] to _decl_.
+           1. Perform ? Set(_localVars_, _declName_, _declValue_, *true*).
+        1. Let _ctx_ be a new Record.
+        1. Set _ctx_.[[LocalVariables]] to _localVars_.
+        1. Set _ctx_.[[MessageFormat]] to _mf_.
+        1. Set _ctx_.[[OnError]] to _onError_.
+        1. Set _ctx_.[[Values]] to ? GetOptionsObject(_values_).
+        1. Return _ctx_.
+      </emu-alg>
+
+      <emu-clause id="sec-messagecontextrecord">
+        <h1>MessageFormatContext Records</h1>
+        <p>
+          A <dfn id="messageformatcontext-record">MessageFormatContext Record</dfn> is used to hold the data required during the formatting of a message.
+          It has the fields defined in <emu-xref href="#table-messageformatcontext-record"></emu-xref>.
+        </p>
+
+        <emu-table id="table-messageformatcontext-record">
+          <emu-caption>Record returned by CreateMessageContext</emu-caption>
+          <table class="real-table">
+            <thead>
+              <tr>
+                <th>Field Name</th>
+                <th>Value Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tr>
+              <td>[[LocalVariables]]</td>
+              <td>Object</td>
+              <td>
+                Cache for local variables, which may be resolved during the formatting.
+                The values in the cache are Objects, each of which will have either [[MessageValue]], [[ResolvedValue]], or [[UnresolvedDeclaration]] internal slots.
+              </td>
+            </tr>
+            <tr>
+              <td>[[MessageFormat]]</td>
+              <td>Intl.MessageFormat</td>
+              <td>The MessageFormat instance on which the formatting is taking place.</td>
+            </tr>
+            <tr>
+              <td>[[OnError]]</td>
+              <td>Function object or *undefined*.</td>
+              <td>The _onError_ argument of the formatter call.</td>
+            </tr>
+            <tr>
+              <td>[[Values]]</td>
+              <td>Object</td>
+              <td>The _values_ argument of the formatter call.</td>
+            </tr>
+          </table>
+        </emu-table>
+      </emu-clause>
+    </emu-clause>
+
+    <emu-clause id="sec-resolvemessage" type="abstract operation">
+      <h1>
+        ResolveMessage (
+          _ctx_: a MessageFormatContext Record
+        ): a List of Strings and Objects
+      </h1>
+      <dl class="header">
+        <dt>description</dt>
+        <dd>It resolves a message into a List of Strings and Objects with either [[MessageMarkup]] or [[MessageValue]] internal slots.</dd>
+      </dl>
+
+      <emu-alg>
+        1. Let _result_ be an empty List.
+        1. Let _pattern_ be ? SelectPattern(_ctx_).
+        1. For each element _el_ of _pattern_,
+           1. If Type(_el_) is String, then
+              1. Append _el_ to _result_.
+           1. Else,
+              1. Assert: Type(_el_) is Object.
+              1. Let _elType_ be ? Get(_el_, *"type"*).
+              1. If _elType_ is *"markup"*, then
+                1. Let _res_ be OrdinaryObjectCreate(*null*, « [[MessageMarkup]] »).
+                1. Set _res_.[[MessageMarkup]] to _el_.
+              1. Else,
+                1. Assert: _elType_ is *"expression"*.
+                1. Let _res_ be ResolveExpression(_ctx_, _el_).
+              1. Append _res_ to _result_.
+        1. Return _result_.
+      </emu-alg>
+
+      <emu-clause id="sec-selectpattern" type="abstract operation">
+        <h1>
+          SelectPattern (
+            _ctx_: a MessageFormatContext Record
+          ): a List of Strings and Objects with an internal slot [[MessageValue]]
+        </h1>
+        <dl class="header">
+          <dt>description</dt>
+          <dd>It selects the pattern to format from the message data model.</dd>
+        </dl>
+
+        <emu-alg>
+          1. Let _msgData_ be _ctx_.[[MessageFormat]].[[MessageData]].
+          1. Let _msgType_ be ? Get(_msgData_, *"type"*).
+          1. If _msgType_ is *"message"*, then
+             1. Let _pattern_ be ? Get(_msgData_, *"pattern"*).
+          1. Else,
+             1. Assert: _msgType_ is *"select"*.
+             1. Let _selectorsData_ be ? Get(_msgData_, *"selectors"*).
+             1. Let _selectorExpressions_ be ? CreateListFromArrayLike(_selectorsData_, &laquo; Object &raquo;).
+             1. Let _selectors_ be an empty List.
+             1. For each element _selExp_ of _selectorExpressions_,
+                1. Let _sel_ be ResolveExpression(_ctx_, _selExp_).
+                1. Let _selectKey_ be ? Get(_sel_.[[MessageValue]], *"selectKey"*).
+                1. If IsCallable(_selectKey_) is *true*, then
+                   1. Append _sel_.[[MessageValue]] to _selectors_.
+                1. Else,
+                   1. Let _error_ be ThrowCompletion(*TypeError*).
+                   1. Perform ? HandleMessageFormatError(_ctx_, _error_).
+                   1. Append *null* to _selectors_.
+             1. Let _variantsArray_ be ? Get(_msgData_, *"variants"*).
+             1. Let _variants_ be ? CreateListFromArrayLike(_variantsArray_, &laquo; Object &raquo;).
+             1. Let _selectedVariant_ be ? SelectVariant(_ctx_, _selectors_, _variants_).
+          1. Return ? CreateListFromArrayLike(_pattern_, &laquo; String, Object &raquo;).
+        </emu-alg>
+      </emu-clause>
+
+      <emu-clause id="sec-selectvariant" type="implementation-defined abstract operation">
+        <h1>
+          SelectVariant (
+            _ctx_: a MessageFormatContext Record,
+            _selectors_: a List of Object and Null values,
+            _variants_: a List of Objects
+          ): an Object
+        </h1>
+        <dl class="header">
+          <dt>description</dt>
+          <dd>
+            <p>
+              It applies the variant selection method defined by
+              the "Resolve Preferences", "Filter Variants", and "Sort Variants" steps of the
+              <a href="https://github.com/unicode-org/message-format-wg/blob/main/spec/formatting.md#pattern-selection">Pattern Selection</a>
+              section of the Unicode MessageFormat 2.0 specification.
+            </p>
+
+            <p>
+              For the selection, Null values in _selectors_ indicate selectors for which selection will always fail.
+              If any errors are encountered during the selection,
+              the HandleMessageFormatError abstract operation must be called
+              with _ctx_ and an abrupt Completion Record containing an Error.
+            </p>
+
+            <p>
+              The value returned by this operation must be an Object matching the JSON Schema definition of a message pattern:
+              <a href="https://github.com/unicode-org/message-format-wg/blob/main/spec/data-model/message.json#/$defs/pattern">
+                https://github.com/unicode-org/message-format-wg/blob/main/spec/data-model/message.json#/$defs/pattern
+              </a>.
+            </p>
+          </dd>
+        </dl>
+      </emu-clause>
+    </emu-clause>
+
+    <emu-clause id="sec-resolveexpression" type="abstract operation">
+      <h1>
+        ResolveExpression (
+          _ctx_: a MessageFormatContext Record,
+          _expression_: an Object,
+        ): an Object with an internal slot [[MessageValue]]
+      </h1>
+      <dl class="header">
+        <dt>description</dt>
+        <dd>It resolves the value of an expression for selection and formatting.</dd>
+      </dl>
+
+      <emu-alg>
+        1. Let _source_ be ? GetSource(_ctx_, _expression_).
+        1. Let _arg_ be ? Get(_expression_, *"arg"*).
+        1. If _arg_ is *undefined*, then
+           1. Let _resArg_ be *undefined*.
+        1. Else,
+           1. Let _resArg_ be ResolveValue(_ctx_, _arg_).
+           1. If _resArg_ has a [[MessageFallback]] internal slot, return _resArg_.
+        1. Let _annotation_ be ? Get(_expression_, *"annotation"*).
+        1. If _annotation_ is *undefined*, then
+           1. Assert: _resArg_ is not *undefined*.
+           1. If Type(_resArg_) is Object and _resArg_ has a [[MessageValue]] internal slot, then
+              1. Return _resArg_.
+           1. Else if Type(_resArg_) is Number or BigInt, then
+              1. Set _annotation_ to OrdinaryObjectCreate(*null*).
+              1. Perform ! CreateDataPropertyOrThrow(_annotation_, *"type"*, *"function"*).
+              1. Perform ! CreateDataPropertyOrThrow(_annotation_, *"name"*, *"number"*).
+           1. Else if Type(_resArg_) is String, then
+              1. Set _annotation_ to OrdinaryObjectCreate(*null*).
+              1. Perform ! CreateDataPropertyOrThrow(_annotation_, *"type"*, *"function"*).
+              1. Perform ! CreateDataPropertyOrThrow(_annotation_, *"name"*, *"string"*).
+           1. Else,
+              1. Return ResolveUnknown(_source_, _resArg_).
+        1. If ? Get(_annotation_, *"type"*) is not *"function"*, then
+           1. Let _error_ be ThrowCompletion(*ReferenceError*).
+           1. Perform ? HandleMessageFormatError(_ctx_, _error_).
+           1. Return ResolveFallback(_source_).
+        1. Return ResolveFunction(_ctx_, _source_, _resArg_, _annotation_).
+      </emu-alg>
+
+      <emu-clause id="sec-resolvefunction" type="abstract operation">
+        <h1>
+          ResolveFunction (
+            _ctx_: a MessageFormatContext Record,
+            _source_: a String,
+            _resArg_: an Object or undefined,
+            _annotation_: an Object,
+          ): an Object with an internal slot [[MessageValue]]
+        </h1>
+        <dl class="header">
+          <dt>description</dt>
+          <dd>It resolves the value of an expression with a function annotation.</dd>
+        </dl>
+
+        <emu-alg>
+          1. Let _name_ be ? Get(_annotation_, *"name"*).
+          1. Let _function_ be ? Get(_ctx_.[[MessageFormat]].[[Functions]], _name_).
+          1. If IsCallable(_function_) is *false*, then
+             1. Let _error_ be ThrowCompletion(*ReferenceError*).
+             1. Perform ? HandleMessageFormatError(_ctx_, _error_).
+             1. Return ResolveFallback(_source_).
+          1. Let _funcCtx_ be OrdinaryObjectCreate(%Object.prototype%).
+          1. Perform ! CreateDataPropertyOrThrow(_funcCtx_, *"locale"*, _ctx_.[[MessageFormat]].[[RequestedLocales]]).
+          1. Perform ! CreateDataPropertyOrThrow(_funcCtx_, *"localeMatcher"*, _ctx_.[[MessageFormat]].[[LocaleMatcher]]).
+          1. Perform ! CreateDataPropertyOrThrow(_funcCtx_, *"source"*, _source_).
+          1. Let _options_ be OrdinaryObjectCreate(%Object.prototype%).
+          1. Let _optArray_ be ? Get(_annotation_, *"options"*).
+          1. If _optArray_ is not *undefined*, then
+             1. Let _optList_ be ? CreateListFromArrayLike(_optArray_).
+             1. For each element _opt_ of _optList_,
+                1. Let _optName_ be ? Get(_opt_, *"name"*).
+                1. Let _optValue_ be ? Get(_opt_, *"value"*).
+                1. Let _resValue_ be ResolveValue(_ctx_, _optValue_).
+                1. If Type(_resValue_) is Object, then
+                   1. If _resValue_ has a [[MessageFallback]] internal slot, then
+                      1. Set _resValue_ to *undefined*.
+                   1. Else if _resValue_ has a [[MessageValue]] internal slot, then
+                      1. Set _resValue_ to _resValue_.[[MessageValue]].
+                1. Perform ? CreateDataPropertyOrThrow(_options_, _optName_, _resValue_).
+             1. Perform ! CreateDataPropertyOrThrow(_part_, *"options"*, _resOptions_).
+          1. Let _funcArgs_ be « _funcCtx_, _options_ ».
+          1. If Type(_resArg_) is Object and _resArg_ has a [[MessageValue]] internal slot, then
+             1. Set _resArg_ to _resArg_.[[MessageValue]].
+          1. If _resArg_ is not *undefined*, then
+             1. Append _resArg_ to _funcArgs_.
+          1. Let _funcRes_ be Completion(Call(_function_, *undefined*, _funcArgs_)).
+          1. If _funcRes_ is a normal completion, then
+             1. Let _mv_ be _funcRes_.[[Value]].
+             1. If Type(_mv_) is Object and Type(? Get(_mv_, *"type"*)) is String and Type(? Get(_mv_, *"source"*)) is String, then
+                1. Let _result_ be OrdinaryObjectCreate(*null*, « [[MessageValue]] »).
+                1. Set _result_.[[MessageValue]] to _mv_.
+                1. Return _result_.
+             1. Else,
+                1. Let _error_ be ThrowCompletion(*TypeError*).
+                1. Perform ? HandleMessageFormatError(_ctx_, _error_).
+                1. Return ResolveFallback(_source_).
+          1. Else,
+             1. Perform ? HandleMessageFormatError(_ctx_, _funcRes_).
+             1. Return ResolveFallback(_source_).
+        </emu-alg>
+      </emu-clause>
+
+      <emu-clause id="sec-resolveunknown" type="abstract operation">
+        <h1>
+          ResolveUnknown (
+            _source_: a String,
+            _value_: an ECMAScript language value
+          ): an Object with an internal slot [[MessageValue]]
+        </h1>
+        <dl class="header">
+          <dt>description</dt>
+          <dd>It resolves an unknown value.</dd>
+        </dl>
+
+        <emu-alg>
+          1. Let _toPartsClosure_ be a new Abstract Closure with no parameters that captures _source_ and _value_ and performs the following steps when called:
+             1. Let _part_ be OrdinaryObjectCreate(%Object.prototype%).
+             1. Perform ! CreateDataPropertyOrThrow(_part_, *"type"*, *"unknown"*).
+             1. Perform ! CreateDataPropertyOrThrow(_part_, *"source"*, _source_).
+             1. Perform ! CreateDataPropertyOrThrow(_part_, *"value"*, _value_).
+             1. Return CreateArrayFromList(« _part_ »).
+          1. Let _toParts_ be CreateBuiltinFunction(_toPartsClosure_, *0*, *"toParts"*, « »).
+          1. Let _toStringClosure_ be a new Abstract Closure with no parameters that captures _value_ and performs the following steps when called:
+             1. Return ? ToString(_value_).
+          1. Let _toString_ be CreateBuiltinFunction(_toStringClosure_, *0*, *"toString"*, « »).
+          1. Let _valueOfClosure_ be a new Abstract Closure with no parameters that captures _value_ and performs the following steps when called:
+             1. Return _value_.
+          1. Let _valueOf_ be CreateBuiltinFunction(_valueOfClosure_, *0*, *"valueOf"*, « »).
+          1. Let _mv_ be OrdinaryObjectCreate(%Object.prototype%).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"type"*, *"unknown"*).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"source"*, _source_).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"locale"*, *"und"*).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"toParts"*, _toParts_).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"toString"*, _toString_).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"valueOf"*, _valueOf_).
+          1. Let _unknown_ be OrdinaryObjectCreate(*null*, « [[MessageValue]] »).
+          1. Set _unknown_.[[MessageValue]] to _mv_.
+          1. Return _unknown_.
+        </emu-alg>
+      </emu-clause>
+    </emu-clause>
+
+    <emu-clause id="sec-formatmarkuppart" type="abstract operation">
+      <h1>
+        FormatMarkupPart (
+          _ctx_: a MessageFormatContext Record,
+          _markup_: an Object,
+        ): an Object
+      </h1>
+      <dl class="header">
+        <dt>description</dt>
+        <dd>It resolves the formatted part value of a markup placeholder.</dd>
+      </dl>
+
+      <emu-alg>
+        1. Let _kind_ be ? Get(_markup_, *"kind"*).
+        1. Let _name_ be ? Get(_markup_, *"name"*).
+        1. Let _options_ be ? Get(_markup_, *"options"*).
+        1. Let _part_ be OrdinaryObjectCreate(%Object.prototype%).
+        1. Perform ! CreateDataPropertyOrThrow(_part_, *"type"*, *"markup"*).
+        1. Perform ! CreateDataPropertyOrThrow(_part_, *"kind"*, _kind_).
+        1. Perform ! CreateDataPropertyOrThrow(_part_, *"name"*, _name_).
+        1. If _kind_ is not *"close"* and _options_ is not *undefined*, then
+           1. Let _len_ be ? LengthOfArrayLike(_options_).
+           1. If _len_ > 0, then
+              1. Let _opts_ be ? CreateListFromArrayLike(_options_).
+              1. Let _resOptions_ be OrdinaryObjectCreate(%Object.prototype%).
+              1. For each element _opt_ of _opts_,
+                 1. Let _optName_ be ? Get(_opt_, *"name"*).
+                 1. Let _optValue_ be ? Get(_opt_, *"value"*).
+                 1. Let _resValue_ be ResolveValue(_ctx_, _optValue_).
+                 1. If Type(_resValue_) is Object, then
+                    1. If _resValue_ has a [[MessageFallback]] internal slot, then
+                       1. Set _resValue_ to *undefined*.
+                    1. Else,
+                       1. Let _valueOf_ be ? Get(_resValue_, *"valueOf"*).
+                       1. If IsCallable(_valueOf_) is *true*, then
+                          1. Let _valueOfResult_ be Completion(Call(_valueOf_, _resValue_)).
+                          1. If _valueOfResult_ is a normal completion, then
+                             1. Set _resValue_ to _valueOfResult_.[[Value]].
+                          1. Else,
+                             1. Perform ? HandleMessageFormatError(_ctx_, _valueOfResult_).
+                             1. Set _resValue_ to *undefined*.
+                 1. Perform ! CreateDataPropertyOrThrow(_resOptions_, _optName_, _resValue_).
+              1. Perform ! CreateDataPropertyOrThrow(_part_, *"options"*, _resOptions_).
+        1. Return CreateArrayFromList(« _part_ »).
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id="sec-getsource" type="abstract operation">
+      <h1>
+        GetSource (
+          _ctx_: a MessageFormatContext Record,
+          _value_: an Object
+        ): a String
+      </h1>
+      <dl class="header">
+        <dt>description</dt>
+        <dd>Determines the "source" value for a data model Object.</dd>
+      </dl>
+
+      <emu-alg>
+        1. Let _type_ be ? Get(_value_, *"type"*).
+        1. If _type_ is *"literal"*, then
+           1. Let _strValue_ be ? Get(_value_, *"value"*).
+           1. Modify _strValue_ such that all *"\"* characters are replaced with *"\\"*.
+           1. Modify _strValue_ such that all *"|"* characters are replaced with *"\|"*.
+           1. Return the string-concatenation of *"|"*, _strValue_, and *"|"*.
+        1. If _type_ is *"variable"*, then
+           1. Let _name_ be ? Get(_value_, *"name"*).
+           1. Let _local_ be ! Get(_ctx_.[[LocalVariables]], _name_).
+           1. If Type(_local_) is Object, then
+              1. If _local_ has an [[UnresolvedDeclaration]] internal slot, then
+                 1. Let _decl_ be _local_.[[UnresolvedDeclaration]].
+                 1. If ? Get(_decl_, *"type"*) is *"local"*, then
+                    1. Let _declValue_ be ? Get(_decl_, *"value"*).
+                    1. Return ? GetSource(_ctx_, _declValue_).
+              1. Else if _local_ has a [[MessageValue]] internal slot, then
+                 1. Return MessageValueSource(_local_.[[MessageValue]]).
+              1. Else,
+                 1. Assert: _local_ has a [[ResolvedName]] internal slot.
+                 1. Assert: _local_ has a [[ResolvedValue]] internal slot.
+                 1. Set _name_ to _local_.[[ResolvedName]].
+           1. Return the string-concatenation of *"$"* and _name_.
+        1. If _type_ is *"markup"*, then
+           1. Let _kind_ be ? Get(_value_, *"kind"*).
+           1. Let _name_ be ? Get(_value_, *"name"*).
+           1. If _kind_ is *"open"*, return the string-concatenation of *"#"* and _name_.
+           1. If _kind_ is *"standalone"*, return the string-concatenation of *"#"*, _name_, and *"/"*.
+           1. If _kind_ is *"close"*, return the string-concatenation of *"/"* and _name_.
+        1. If _type_ is *"function"*, then
+           1. Let _name_ be ? Get(_value_, *"name"*).
+           1. Return the string-concatenation of *":"* and _name_.
+        1. If _type_ is *"unsupported-annotation"*, then
+           1. Return ? Get(_value_, *"sigil"*).
+        1. If _type_ is *"expression"*, then
+           1. Let _arg_ be ? Get(_value_, *"arg"*).
+           1. If _arg_ is not *undefined*, return ? GetSource(_ctx_, _arg_).
+           1. Let _annotation_ be ? Get(_value_, *"annotation"*).
+           1. If _annotation_ is not *undefined*, return ? GetSource(_ctx_, _annotation_).
+        1. Return *"\uFFFD"*.
+      </emu-alg>
+
+      <emu-clause id="sec-messagevaluesource" type="abstract operation">
+        <h1>
+          MessageValueSource (
+            _mv_: an Object
+          ): a String
+        </h1>
+        <dl class="header">
+          <dt>description</dt>
+          <dd>
+            It gets the source string representation of a resolved message value,
+            which should be always available.
+            On any error, it returns the Unicode replacement character � instead.
+          </dd>
+        </dl>
+
+        <emu-alg>
+          1. Let _source_ be Completion(Get(_mv_, *"source"*)).
+          1. If _source_ is a normal completion, then
+             1. Let _str_ be _source_.[[Value]].
+             1. If Type(_str_) is String, then
+                1. Return _str_.
+          1. Return *"\uFFFD"*.
+        </emu-alg>
+      </emu-clause>
     </emu-clause>
 
     <emu-clause id="sec-handlemessageformaterror" type="abstract operation">
       <h1>
         HandleMessageFormatError(
-          _onError_: a Function or undefined,
+          _ctx_: a MessageFormatContext Record,
           _completionRecord_: a Completion Record,
         )
       </h1>
@@ -326,6 +949,7 @@ contributors: Eemeli Aro
       <emu-alg>
         1. Assert: _completionRecord_ is a Completion Record.
         1. Assert: _completionRecord_ is an abrupt completion.
+        1. Let _onError_ be _ctx_.[[OnError]].
         1. Let _error_ be _completionRecord_.[[Value]].
         1. If _onError_ is not *undefined*, then
            1. Perform ? Call(_onError_, *undefined*, &laquo; _error_ &raquo;).
@@ -334,187 +958,130 @@ contributors: Eemeli Aro
       </emu-alg>
     </emu-clause>
 
-    <emu-clause id="sec-messagefallbackpart" type="abstract operation">
+    <emu-clause id="sec-resolvefallback" type="abstract operation">
       <h1>
-        MessageFallbackPart (
-          _mv_: an Object
-        ): an Object
+        ResolveFallback (
+          _source_: a String
+        ): an Object with internal slots [[MessageFallback]] and [[MessageValue]]
       </h1>
       <dl class="header">
         <dt>description</dt>
-        <dd>It gets the fallback formatted part representation of a MessageValue</dd>
+        <dd>It resolves a fallback value.</dd>
       </dl>
 
       <emu-alg>
-        1. Let _result_ be OrdinaryObjectCreate(%Object.prototype%).
-        1. Let _source_ be MessageValueSource(_mv_).
-        1. Perform ! CreateDataPropertyOrThrow(_result_, *"type"*, *"fallback"*).
-        1. Perform ! CreateDataPropertyOrThrow(_result_, *"source"*, _source_).
-        1. Return _result_.
+        1. Let _toPartsClosure_ be a new Abstract Closure with no parameters that captures _source_ and performs the following steps when called:
+           1. Let _part_ be MessageFallbackPart(_source_).
+           1. Return CreateArrayFromList(« _part_ »).
+        1. Let _toParts_ be CreateBuiltinFunction(_toPartsClosure_, *0*, *"toParts"*, « »).
+        1. Let _toStringClosure_ be a new Abstract Closure with no parameters that captures _source_ and performs the following steps when called:
+           1. Return MessageFallbackString(_source_).
+        1. Let _toString_ be CreateBuiltinFunction(_toStringClosure_, *0*, *"toString"*, « »).
+        1. Let _mv_ be OrdinaryObjectCreate(%Object.prototype%).
+        1. Perform ! CreateDataPropertyOrThrow(_mv_, *"source"*, _source_).
+        1. Perform ! CreateDataPropertyOrThrow(_mv_, *"toParts"*, _toParts_).
+        1. Perform ! CreateDataPropertyOrThrow(_mv_, *"toString"*, _toString_).
+        1. Let _fallback_ be OrdinaryObjectCreate(*null*, « [[MessageFallback]], [[MessageValue]] »).
+        1. Set _fallback_.[[MessageValue]] to _mv_.
+        1. Return _fallback_.
       </emu-alg>
+
+      <emu-clause id="sec-messagefallbackpart" type="abstract operation">
+        <h1>
+          MessageFallbackPart (
+            _source_: a String
+          ): an Object
+        </h1>
+        <dl class="header">
+          <dt>description</dt>
+          <dd>It gets the fallback formatted part representation.</dd>
+        </dl>
+
+        <emu-alg>
+          1. Let _result_ be OrdinaryObjectCreate(%Object.prototype%).
+          1. Perform ! CreateDataPropertyOrThrow(_result_, *"type"*, *"fallback"*).
+          1. Perform ! CreateDataPropertyOrThrow(_result_, *"source"*, _source_).
+          1. Return _result_.
+        </emu-alg>
+      </emu-clause>
+
+      <emu-clause id="sec-messagefallbackstring" type="abstract operation">
+        <h1>
+          MessageFallbackString (
+            _source_: a String
+          ): a String
+        </h1>
+        <dl class="header">
+          <dt>description</dt>
+          <dd>It gets the fallback formatted string representation.</dd>
+        </dl>
+
+        <emu-alg>
+          1. Return the string-concatenation of *"{"*, _source_, and *"}"*.
+        </emu-alg>
+      </emu-clause>
     </emu-clause>
 
-    <emu-clause id="sec-messagefallbackstring" type="abstract operation">
+    <emu-clause id="sec-resolvevalue" type="abstract operation">
       <h1>
-        MessageFallbackString (
-          _mv_: an Object
-        ): a String
-      </h1>
-      <dl class="header">
-        <dt>description</dt>
-        <dd>It gets the fallback formatted string representation of a MessageValue</dd>
-      </dl>
-
-      <emu-alg>
-        1. Let _source_ be MessageValueSource(_mv_).
-        1. Let _result_ be the string-concatenation of *"{"*, _source_, and *"}"*.
-        1. Return _result_.
-      </emu-alg>
-    </emu-clause>
-
-    <emu-clause id="sec-messagevaluesource" type="abstract operation">
-      <h1>
-        MessageValueSource (
-          _mv_: an Object
-        ): a String
+        ResolveValue (
+          _ctx_: a MessageFormatContext Record,
+          _value_: an Object,
+        ): an ECMAScript language value
       </h1>
       <dl class="header">
         <dt>description</dt>
         <dd>
-          It gets the source string representation of a MessageValue,
-          which should be always available.
-          On any error, return the Unicode replacement character � instead.
+          It resolves the value of a literal or variable reference.
+          For literals, the returned value is always a String.
+          For variable references, the returned value may be any ECMAScript language value.
+          For unresolved variable references, the returned value is an Object with an internal slot [[MessageFallback]].
         </dd>
       </dl>
 
       <emu-alg>
-        1. Let _source_ be Completion(Get(_mv_, *"source"*)).
-        1. If _source_ is a normal completion, then
-           1. Let _str_ be _source_.[[Value]].
-           1. If _str_ is a String, then
-              1. Return _str_.
-        1. Return *"\uFFFD"*.
-      </emu-alg>
-    </emu-clause>
-
-    <emu-clause id="sec-resolveexpression" type="abstract operation">
-      <h1>
-        ResolveExpression (
-          _mf_: an Object,
-          _values_: an Object or undefined,
-          _onError_: a Function or undefined,
-          _expression_: an Object,
-        ): an Object
-      </h1>
-      <dl class="header">
-        <dt>description</dt>
-        <dd>It resolves the value of an expression for selection and formatting.</dd>
-      </dl>
-
-      <emu-alg>
-        1. ...TODO
-      </emu-alg>
-    </emu-clause>
-
-    <emu-clause id="sec-resolvemessage" type="abstract operation">
-      <h1>
-        ResolveMessage (
-          _mf_: an Object,
-          _values_: an Object or undefined,
-          _onError_: a Function or undefined,
-        ): a List of Objects
-      </h1>
-      <dl class="header">
-        <dt>description</dt>
-        <dd>It resolves a message during formatting into a List of MessageValue Objects.</dd>
-      </dl>
-
-      <emu-alg>
-        1. Let _result_ be an empty List.
-        1. Let _pattern_ be ? SelectPattern(_mf_, _values_, _onError_).
-        1. For each element _el_ of _pattern_,
-           1. If _el_ is a String, then
-              1. Append _el_ to _result_.
+        1. Let _type_ be ? Get(_value_, *"type"*).
+        1. If _type_ is *"literal"*, then
+           1. Return ? Get(_value_, *"value"*).
+        1. Assert: _type_ is *"variable"*.
+        1. Let _name_ be ? Get(_value_, *"name"*).
+        1. Let _localVars_ be _ctx_.[[LocalVariables]].
+        1. Let _var_ be ! Get(_localVars_, _name_).
+        1. If _var_ is *undefined*, then
+           1. Set _var_ to ? Get(_ctx_.[[Values]], _name_).
+           1. If _var_ is *undefined*, then
+              1. Let _error_ be ThrowCompletion(*ReferenceError*).
+              1. Perform ? HandleMessageFormatError(_ctx_, _error_).
+              1. Let _source_ be ? GetSource(_value_).
+              1. Set _var_ to ResolveFallback(_source_).
+              1. Perform ! Set(_localVars_, _name_, _var_).
            1. Else,
-              1. Let _mv_ be ResolveExpression(_mf_, _values_, _onError_, _el_).
-              1. Append _mv_ to _result_.
-        1. Return _result_.
-      </emu-alg>
-    </emu-clause>
-
-    <emu-clause id="sec-selectpattern" type="abstract operation">
-      <h1>
-        SelectPattern (
-          _mf_: an Object,
-          _values_: an Object or undefined,
-          _onError_: a Function or undefined,
-        ): a List of Strings and Objects
-      </h1>
-      <dl class="header">
-        <dt>description</dt>
-        <dd>It selects the pattern to format from the message data model.</dd>
-      </dl>
-
-      <emu-alg>
-        1. Let _msgData_ be _mf_.[[MessageData]].
-        1. Let _msgType_ be ? Get(_msgData_, *"type"*).
-        1. Assert: _msgType_ is a String.
-        1. If _msgType_ is *"message"*, then
-           1. Let _pattern_ be ? Get(_msgData_, *"pattern"*).
+              1. Let _resolved_ be OrdinaryObjectCreate(*null*, « [[ResolvedName]], [[ResolvedValue]] »).
+              1. Set _resolved_.[[ResolvedName]] to _name_.
+              1. Set _resolved_.[[ResolvedValue]] to _var_.
+              1. Perform ! Set(_localVars_, _name_, _resolved_).
         1. Else,
-           1. Let _selectorsData_ be ? Get(_msgData_, *"selectors"*).
-           1. Let _selectorExpressions_ be ? CreateListFromArrayLike(_selectorsData_, &laquo; Object &raquo;).
-           1. Let _selectors_ be an empty List of Object and Null values.
-           1. For each element _selExp_ of _selectorExpressions_,
-              1. Let _sel_ be ResolveExpression(_mf_, _values_, _onError_, _selExp_).
-              1. Let _selectKeys_ be ? Get(_sel_, *"selectKeys"*).
-              1. If IsCallable(_selectKeys_) is *true*, then
-                 1. Append _sel_ to _selectors_.
+           1. Assert: Type(_var_) is Object.
+           1. If _var_ has a [[ResolvedValue]] internal slot, then
+              1. Set _var_ to _var_.[[ResolvedValue]].
+           1. Else if _var_ has an [[UnresolvedDeclaration]] internal slot, then
+              1. Let _decl_ be _var_.[[UnresolvedDeclaration]].
+              1. Let _declType_ be ? Get(_decl_, *"type"*).
+              1. If _declType_ is *"input"*, then
+                 1. Let _expression_ be ? Get(_decl_, *"value"*).
+                 1. Perform ! Set(_localVars_, _name_, *undefined*).
+                 1. Set _var_ to ? ResolveExpression(_ctx_, _expression_).
+              1. Else if _declType_ is *"local"*, then
+                 1. Let _expression_ be ? Get(_decl_, *"value"*).
+                 1. Set _var_ to ? ResolveExpression(_ctx_, _expression_).
               1. Else,
-                 1. Let _errorCompletion_ be ThrowCompletion(*TypeError*).
-                 1. Perform ? HandleMessageFormatError(_onError_, _errorCompletion_).
-                 1. Append *null* to _selectors_.
-           1. Let _variantsArray_ be ? Get(_msgData_, *"variants"*).
-           1. Let _variants_ be ? CreateListFromArrayLike(_variantsArray_, &laquo; Object &raquo;).
-           1. Let _selectedVariant_ be ? SelectVariant(_selectors_, _variants_, _onError_).
-        1. Let _patternBody_ be ? Get(_pattern_, *"body"*).
-        1. Return ? CreateListFromArrayLike(_patternBody_, &laquo; String, Object &raquo;).
+                 1. Let _error_ be ThrowCompletion(*ReferenceError*).
+                 1. Perform ? HandleMessageFormatError(_ctx_, _error_).
+                 1. Let _source_ be ? GetSource(_value_).
+                 1. Set _var_ to ResolveFallback(_source_).
+              1. Perform ! Set(_localVars_, _name_, _var_).
+        1. Return _var_.
       </emu-alg>
-    </emu-clause>
-
-    <emu-clause id="sec-selectvariant" type="implementation-defined abstract operation">
-      <h1>
-        SelectVariant (
-          _selectors_: a List of Object and Null values,
-          _variants_: a List of Objects,
-          _onError_: a Function or undefined,
-        ): an Object
-      </h1>
-      <dl class="header">
-        <dt>description</dt>
-        <dd>
-          <p>
-            It applies the variant selection method defined by
-            the "Resolve Preferences", "Filter Variants", and "Sort Variants" steps of the
-            <a href="https://github.com/unicode-org/message-format-wg/blob/main/spec/formatting.md#pattern-selection">Pattern Selection</a>
-            section of the Unicode MessageFormat 2.0 specification.
-          </p>
-
-          <p>
-            For the selection, Null values in _selectors_ indicate selectors for which selection will always fail.
-            If any errors are encountered during the selection,
-            the HandleMessageFormatError abstract operation must be called
-            with _onError_ and an abrupt Completion Record containing an Error.
-          </p>
-
-          <p>
-            The value returned by this operation must be an Object matching the JSON Schema definition of a message pattern:
-            <a href="https://github.com/unicode-org/message-format-wg/blob/main/spec/data-model/message.json#/$defs/pattern">
-              https://github.com/unicode-org/message-format-wg/blob/main/spec/data-model/message.json#/$defs/pattern
-            </a>.
-          </p>
-        </dd>
-      </dl>
     </emu-clause>
   </emu-clause>
 </emu-clause>
