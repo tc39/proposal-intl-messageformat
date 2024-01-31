@@ -50,7 +50,7 @@ In practice, this would need to account for any number of notifications,
 and the plural rules of the current locale.
 Using [MF2 syntax], this could be defined as:
 
-[mf2 syntax]: https://github.com/unicode-org/message-format-wg/blob/develop/spec/syntax.md
+[mf2 syntax]: https://github.com/unicode-org/message-format-wg/blob/main/spec/syntax.md
 
 ```ini
 .match {$count :number}
