@@ -81,7 +81,7 @@ mf1.format(); // 'Hello!'
 
 // A parametric message, formatted to parts
 const mf2 = new Intl.MessageFormat('Hello {$place}!', 'en');
-const greet = mf.formatToParts({ place: 'world' });
+const greet = mf2.formatToParts({ place: 'world' });
 /* [
   { type: 'text', value: 'Hello ' },
   { type: 'string', source: '$place', value: 'world' },
