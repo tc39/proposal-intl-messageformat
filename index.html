@@ -3036,7 +3036,7 @@ li.menu-search-result-term:before {
         The following steps are taken:
       </p>
 
-      <emu-alg><ol><li>If <var>source</var> is <emu-val>undefined</emu-val>, throw a <emu-val>TypeError</emu-val> exception.</li><li>Let <var>msgData</var> be ?&nbsp;<emu-xref aoid="GetMessageData" id="_ref_6"><a href="#sec-getmessagedata">GetMessageData</a></emu-xref>(<var>source</var>).</li><li>Let <var>requestedLocales</var> be ?&nbsp;CanonicalizeLocaleList(<var>locales</var>).</li><li>Set <var>options</var> to ?&nbsp;GetOptionsObject(<var>options</var>).</li><li>Let <var>matcher</var> be ?&nbsp;GetOption(<var>options</var>, <emu-val>"localeMatcher"</emu-val>, <emu-const>string</emu-const>,
+      <emu-alg><ol><li>If <var>source</var> is not an Object, throw a <emu-val>TypeError</emu-val> exception.</li><li>Let <var>msgData</var> be ?&nbsp;<emu-xref aoid="GetMessageData" id="_ref_6"><a href="#sec-getmessagedata">GetMessageData</a></emu-xref>(<var>source</var>).</li><li>Let <var>requestedLocales</var> be ?&nbsp;CanonicalizeLocaleList(<var>locales</var>).</li><li>Set <var>options</var> to ?&nbsp;GetOptionsObject(<var>options</var>).</li><li>Let <var>matcher</var> be ?&nbsp;GetOption(<var>options</var>, <emu-val>"localeMatcher"</emu-val>, <emu-const>string</emu-const>,
            « <emu-val>"lookup"</emu-val>, <emu-val>"best fit"</emu-val> », <emu-val>"best fit"</emu-val>).</li><li>Let <var>userFunctions</var> be ?&nbsp;Get(<var>options</var>, <emu-val>"functions"</emu-val>).</li><li>Let <var>functions</var> be ?&nbsp;<emu-xref aoid="GetMessageFunctions" id="_ref_7"><a href="#sec-getmessagefunctions">GetMessageFunctions</a></emu-xref>(<var>userFunctions</var>).</li><li>Set <var>messageFormat</var>.<var class="field">[[MessageData]]</var> to <var>msgData</var>.</li><li>Set <var>messageFormat</var>.<var class="field">[[RequestedLocales]]</var> to <var>requestedLocales</var>.</li><li>Set <var>messageFormat</var>.<var class="field">[[LocaleMatcher]]</var> to <var>matcher</var>.</li><li>Set <var>messageFormat</var>.<var class="field">[[Functions]]</var> to <var>functions</var>.</li><li>Return <var>messageFormat</var>.</li></ol></emu-alg>
     </emu-clause>
   </emu-clause>
@@ -3156,10 +3156,6 @@ li.menu-search-result-term:before {
             <td><var class="field">[[RequestedLocales]]</var></td>
             <td><emu-val>"locales"</emu-val></td>
           </tr>
-          <tr>
-            <td><var class="field">[[MessageData]]</var></td>
-            <td><emu-val>"message"</emu-val></td>
-          </tr>
         </tbody></table>
       </figure></emu-table>
     </emu-clause>
@@ -3204,15 +3200,13 @@ li.menu-search-result-term:before {
 
     <emu-clause id="sec-getmessagedata" type="implementation-defined abstract operation" aoid="GetMessageData">
       <h1><span class="secnum">1.5.1</span> GetMessageData ( <var>source</var> )</h1>
-      <p>The implementation-defined abstract operation GetMessageData takes argument <var>source</var> (a String or an Object) and returns an Object conforming to the <a href="https://github.com/unicode-org/message-format-wg/blob/main/spec/data-model/message.json">JSON Schema definition</a> of a message according to the Unicode MessageFormat 2.0 specification.</p>
+      <p>The implementation-defined abstract operation GetMessageData takes argument <var>source</var> (an Object) and returns an Object conforming to the <a href="https://github.com/unicode-org/message-format-wg/blob/main/spec/data-model/message.json">JSON Schema definition</a> of a message according to the Unicode MessageFormat 2.0 specification.</p>
           <p>
-            If <var>source</var> is a String, it returns the message data representation corresponding to the input <var>source</var> according to the
-            <a href="https://github.com/unicode-org/message-format-wg/blob/main/spec/syntax.md">Unicode MessageFormat 2.0 syntax</a>.
-            If <var>source</var> is an Object, it checks that <var>source</var> holds a valid message data representation,
+            It checks that <var>source</var> holds a valid message data representation,
             and returns an equivalent Object that is not affected by any further changes to <var>source</var>.
           </p>
 
-          <p>If <var>source</var> contains a syntax or data model error, this operation throws a <emu-val>SyntaxError</emu-val>.</p>
+          <p>If <var>source</var> contains a data model error, this operation throws a <emu-val>SyntaxError</emu-val>.</p>
         
     </emu-clause>
 
