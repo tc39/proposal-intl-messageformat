@@ -49,7 +49,7 @@ contributors: Eemeli Aro
       </p>
 
       <emu-alg>
-        1. If _source_ is *undefined*, throw a *TypeError* exception.
+        1. If _source_ is not an Object, throw a *TypeError* exception.
         1. Let _msgData_ be ? GetMessageData(_source_).
         1. Let _requestedLocales_ be ? CanonicalizeLocaleList(_locales_).
         1. Set _options_ to ? GetOptionsObject(_options_).
@@ -243,10 +243,6 @@ contributors: Eemeli Aro
             <td>[[RequestedLocales]]</td>
             <td>*"locales"*</td>
           </tr>
-          <tr>
-            <td>[[MessageData]]</td>
-            <td>*"message"*</td>
-          </tr>
         </table>
       </emu-table>
     </emu-clause>
@@ -292,20 +288,18 @@ contributors: Eemeli Aro
     <emu-clause id="sec-getmessagedata" type="implementation-defined abstract operation">
       <h1>
         GetMessageData (
-          _source_: a String or an Object,
+          _source_: an Object,
         ): an Object conforming to the <a href="https://github.com/unicode-org/message-format-wg/blob/main/spec/data-model/message.json">JSON Schema definition</a> of a message according to the Unicode MessageFormat 2.0 specification
       </h1>
       <dl class="header">
         <dt>description</dt>
         <dd>
           <p>
-            If _source_ is a String, it returns the message data representation corresponding to the input _source_ according to the
-            <a href="https://github.com/unicode-org/message-format-wg/blob/main/spec/syntax.md">Unicode MessageFormat 2.0 syntax</a>.
-            If _source_ is an Object, it checks that _source_ holds a valid message data representation,
+            It checks that _source_ holds a valid message data representation,
             and returns an equivalent Object that is not affected by any further changes to _source_.
           </p>
 
-          <p>If _source_ contains a syntax or data model error, this operation throws a *SyntaxError*.</p>
+          <p>If _source_ contains a data model error, this operation throws a *SyntaxError*.</p>
         </dd>
       </dl>
     </emu-clause>
