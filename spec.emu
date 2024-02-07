@@ -292,21 +292,20 @@ contributors: Eemeli Aro
     <emu-clause id="sec-getmessagedata" type="implementation-defined abstract operation">
       <h1>
         GetMessageData (
-          _source_: a String,
-        ): an Object
+          _source_: a String or an Object,
+        ): an Object conforming to the <a href="https://github.com/unicode-org/message-format-wg/blob/main/spec/data-model/message.json">JSON Schema definition</a> of a message according to the Unicode MessageFormat 2.0 specification
       </h1>
       <dl class="header">
         <dt>description</dt>
         <dd>
           <p>
-            It determines the message data representation corresponding to the input _source_ according to the
+            If _source_ is a String, it returns the message data representation corresponding to the input _source_ according to the
             <a href="https://github.com/unicode-org/message-format-wg/blob/main/spec/syntax.md">Unicode MessageFormat 2.0 syntax</a>.
-            The message data representation is an Object conforming to the
-            <a href="https://github.com/unicode-org/message-format-wg/blob/main/spec/data-model/message.json">JSON Schema definition</a>
-            of the Unicode MessageFormat 2.0 specification.
+            If _source_ is an Object, it checks that _source_ holds a valid message data representation,
+            and returns an equivalent Object that is not affected by any further changes to _source_.
           </p>
 
-          <p>If _source_ contains a syntax or data model error, this operation throws a %SyntaxError%.</p>
+          <p>If _source_ contains a syntax or data model error, this operation throws a *SyntaxError*.</p>
         </dd>
       </dl>
     </emu-clause>
