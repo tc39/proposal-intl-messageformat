@@ -326,9 +326,12 @@ contributors: Eemeli Aro
         1. Let _number_ be CreateBuiltinFunction(_numberSteps_, *3*, *"number"*, « »).
         1. Let _stringSteps_ be the algorithm steps defined in <emu-xref href="#sec-messageformat-stringfunctions"></emu-xref>.
         1. Let _string_ be CreateBuiltinFunction(_stringSteps_, *3*, *"string"*, « »).
+        1. Let _dateTimeSteps_ be the algorithm steps defined in <emu-xref href="#sec-messageformat-stringfunctions"></emu-xref>.
+        1. Let _dateTime_ be CreateBuiltinFunction(_dateTimeSteps_, *3*, *"string"*, « »).
         1. Let _functions_ be OrdinaryObjectCreate(%Object.prototype%).
         1. Perform ! CreateDataPropertyOrThrow(_functions_, *"number"*, _number_).
         1. Perform ! CreateDataPropertyOrThrow(_functions_, *"string"*, _string_).
+        1. Perform ! CreateDataPropertyOrThrow(_functions_, *"datetime"*, _dateTime_).
         1. For each String _name_ of ? EnumerableOwnProperties(_userFunctions_, ~key~),
            1. Let _func_ be ? Get(_userFunctions_, _name_).
            1. If IsCallable(_func_) is *true*, then
@@ -480,6 +483,75 @@ contributors: Eemeli Aro
 
         <p>
           The *"length"* property of a MessageFormat string function is *3*.
+        </p>
+      </emu-clause>
+
+      <emu-clause id="sec-messageformat-datetimefunctions">
+        <h1>MessageFormat DateTime Functions</h1>
+        <p>
+          A MessageFormat dateTime function is an anonymous built-in function.
+        </p>
+        <p>
+          When a MessageFormat dateTime function is called with arguments _funcCtx_ (an Object), _options_ (an Object), and _input_ (an ECMAScript language value), the following steps are taken:
+        </p>
+
+        <emu-alg>
+          1. Let _locale_ be ! Get(_funcCtx_, *"locale"*).
+          1. Let _localeMatcher_ be ! Get(_funcCtx_, *"localeMatcher"*).
+          1. Let _source_ be ! Get(_funcCtx_, *"source"*).
+          1. Let _opts_ be OrdinaryObjectCreate(%Object.prototype%).
+          1. Perform ! CreateDataPropertyOrThrow(_opt_, *"localeMatcher"*, _localeMatcher_).
+          1. If Type(_input_) is Object, then
+            1. If HasProperty(_input_, *"options"*) is *true*, set _opts_ to ? Get(_input_, *"options"*). <!-- TODO: is calling object.assign within the spec a decent idea? -->
+            1. Let _valueOf_ be ? Get(_input_, *"valueOf"*).
+            1. If InstanceOfOperator(_input_, %Date%) is *false* and IsCallable(_valueOf_) is *true*, set _input_ to Call(_valueOf_, _input_).
+          1. If Type(_input_) is Number or String, let _value_ be ? Construct(%Date%, « _input_ »).
+          1. Else if Type(_input_) is Object, let _value_ be _input_.
+          1. If InstanceOfOperator(_value_, %Date%) is *false*, throw a *TypeError* exception.
+          1. For each String _optName_ of ? EnumerableOwnProperties(_options_, ~key~),
+            1. If _optName_ is not *"locale"*, then
+              1.  Let _optValue_ be ? Get(_options_, _optName_).
+              1. If Type(_optValue_) is Object, then
+                  1. Let _optValueOf_ be ? Get(_optValue_, *"valueOf"*).
+                  1. If IsCallable(_optValueOf_) is *true*, then
+                    1. Set _optValue__ to ? Call(_optValueOf_, _optValue_).
+              1. If _optName_ is *"fractionalSecondDigits"*, set _optValue_ to ToNumber(_optValue_). <!-- TODO: should only allow positive integers -->
+              1. Else if _optName_ is *"hour12"*, then
+                1. If _optValue_ is *"true"*, then
+                  1. Set _optValue_ to *true*.
+                1. Else if _optValue_ is *"false"*, then
+                  1. Set _optValue_ to *false*.
+              1. Else, set _optValue_ to ToString(_optValue_).
+              1. Perform ? Set(_opts_, _optName_, _optValue_, *"true"*).
+          1. Let _dateTimeFormat_ be ? Construct(%Intl.DateTimeFormat%, &laquo; « _locale_, _opts_ »).
+          1. Let _toPartsClosure_ be a new Abstract Closure with no parameters that captures _value_, _source_, and _dateTimeFormat_ and performs the following steps when called:
+            1. Let _parts_ be ? Call(Intl.DateTimeFormat.prototype.formatToParts, _dateTimeFormat_, « _value_ »).
+            1. Let _result_ be OrdinaryObjectCreate(%Object.prototype%).
+            1. Perform ! CreateDataPropertyOrThrow(_result_, *"type"*, *"datetime"*).
+            1. Perform ! CreateDataPropertyOrThrow(_result_, *"source"*, _source_).
+            1. Perform ! CreateDataPropertyOrThrow(_result_, *"locale"*, _dateTimeFormat_.[[Locale]]).
+            1. Perform ! CreateDataPropertyOrThrow(_result_, *"parts"*, _parts_).
+            1. Return CreateArrayFromList(« _result_ »).
+          1. Let _toParts_ be CreateBuiltinFunction(_toPartsClosure_, *0*, *"toParts"*, « »).
+          1. Let _toStringClosure_ be a new Abstract Closure with no parameters that captures _value_ and _dateTimeFormat_ and performs the following steps when called:
+             1. Return ? Call(Intl.DateTimeFormat.prototype.format, _dateTimeFormat_, « _value_ »).
+          1. Let _toString_ be CreateBuiltinFunction(_toStringClosure_, *0*, *"toString"*, « »).
+          1. Let _valueOfClosure_ be a new Abstract Closure with no parameters that captures _value_ and performs the following steps when called:
+             1. Return _value_.
+          1. Let _valueOf_ be CreateBuiltinFunction(_valueOfClosure_, *0*, *"valueOf"*, « »).
+          1. Let _mv_ be OrdinaryObjectCreate(%Object.prototype%).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"type"*, *"datetime"*).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"source"*, _source_).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"locale"*, _dateTimeFormat_.[[Locale]]).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"options"*, _opts_).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"toParts"*, _toParts_).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"toString"*, _toString_).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"valueOf"*, _valueOf_).
+          1. Return _mv_.
+        </emu-alg>
+
+        <p>
+          The *"length"* property of a MessageFormat number function is *3*.
         </p>
       </emu-clause>
     </emu-clause>
