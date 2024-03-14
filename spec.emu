@@ -366,11 +366,12 @@ contributors: Eemeli Aro
           1. Let _booleanOptions_ be « *"useGrouping"* ».
           1. Let _select_ be *"cardinal"*.
           1. For each String _optName_ of ? EnumerableOwnProperties(_options_, ~key~),
-             1. If _optName_ is not *"localeMatcher"* and _optName_ is not *"type"*, then
+             1. If _optName_ is not *"localeMatcher"* and _optName_ is not *"type"*, then <!-- TODO: Fix bad indent -->
+                1. Let _optValue_ be ? Get(_options_, _optName_).
                 1. If Type(_optValue_) is Object, then
                    1. Let _optValueOf_ be ? Get(_optValue_, *"valueOf"*).
                    1. If IsCallable(_optValueOf_) is *true*, then
-                      1. Set _optValue__ to ? Call(_optValueOf_, _optValue_).
+                      1. Set _optValue_ to ? Call(_optValueOf_, _optValue_).
                 1. If _optName_ is *"select"*, then
                    1. If _optValue_ is *"ordinal"* or _optValue_ is *"exact"*, then
                       1. Set _select_ to _optValue_
@@ -403,7 +404,7 @@ contributors: Eemeli Aro
              1. Return *null*.
           1. Let _selectKey_ be CreateBuiltinFunction(_selectKeyClosure_, *1*, *"selectKey"*, « »).
           1. Let _toPartsClosure_ be a new Abstract Closure with no parameters that captures _input_, _source_, and _numberFormat_ and performs the following steps when called:
-             1. Let _parts_ be ? Call(Intl.NumberFormat.prototype.formatToParts, _nf_, « _input_ »).
+             1. Let _parts_ be ? Call(Intl.NumberFormat.prototype.formatToParts, _numberFormat_, « _input_ »).
              1. Let _result_ be OrdinaryObjectCreate(%Object.prototype%).
              1. Perform ! CreateDataPropertyOrThrow(_result_, *"type"*, *"number"*).
              1. Perform ! CreateDataPropertyOrThrow(_result_, *"source"*, _source_).
@@ -412,7 +413,7 @@ contributors: Eemeli Aro
              1. Return CreateArrayFromList(« _result_ »).
           1. Let _toParts_ be CreateBuiltinFunction(_toPartsClosure_, *0*, *"toParts"*, « »).
           1. Let _toStringClosure_ be a new Abstract Closure with no parameters that captures _input_ and _numberFormat_ and performs the following steps when called:
-             1. Return ? Call(Intl.NumberFormat.prototype.format, _nf_, « _input_ »).
+             1. Return ? Call(Intl.NumberFormat.prototype.format, _numberFormat_, « _input_ »).
           1. Let _toString_ be CreateBuiltinFunction(_toStringClosure_, *0*, *"toString"*, « »).
           1. Let _valueOfClosure_ be a new Abstract Closure with no parameters that captures _input_ and performs the following steps when called:
              1. Return _input_.
