@@ -502,7 +502,9 @@ contributors: Eemeli Aro
           1. Let _opts_ be OrdinaryObjectCreate(%Object.prototype%).
           1. Perform ! CreateDataPropertyOrThrow(_opt_, *"localeMatcher"*, _localeMatcher_).
           1. If Type(_input_) is Object, then
-            1. If HasProperty(_input_, *"options"*) is *true*, set _opts_ to ? Get(_input_, *"options"*). <!-- TODO: is calling object.assign within the spec a decent idea? -->
+            1. If HasProperty(_input_, *"options"*) is *true*, then
+              1. Let _inputOptions_ be ? Get(_input_, *"options"*).
+              1. Perform ? Call(Object.assign, *undefined*, « _opts_, _inputOptions_ »).
             1. Let _valueOf_ be ? Get(_input_, *"valueOf"*).
             1. If InstanceOfOperator(_input_, %Date%) is *false* and IsCallable(_valueOf_) is *true*, set _input_ to Call(_valueOf_, _input_).
           1. If Type(_input_) is Number or String, let _value_ be ? Construct(%Date%, « _input_ »).
@@ -510,12 +512,12 @@ contributors: Eemeli Aro
           1. If InstanceOfOperator(_value_, %Date%) is *false*, throw a *TypeError* exception.
           1. For each String _optName_ of ? EnumerableOwnProperties(_options_, ~key~),
             1. If _optName_ is not *"locale"*, then
-              1.  Let _optValue_ be ? Get(_options_, _optName_).
+              1. Let _optValue_ be ? Get(_options_, _optName_).
               1. If Type(_optValue_) is Object, then
                   1. Let _optValueOf_ be ? Get(_optValue_, *"valueOf"*).
                   1. If IsCallable(_optValueOf_) is *true*, then
                     1. Set _optValue__ to ? Call(_optValueOf_, _optValue_).
-              1. If _optName_ is *"fractionalSecondDigits"*, set _optValue_ to ToNumber(_optValue_). <!-- TODO: should only allow positive integers -->
+              1. If _optName_ is *"fractionalSecondDigits"*, set _optValue_ to ToNumber(_optValue_).
               1. Else if _optName_ is *"hour12"*, then
                 1. If _optValue_ is *"true"*, then
                   1. Set _optValue_ to *true*.
@@ -523,7 +525,7 @@ contributors: Eemeli Aro
                   1. Set _optValue_ to *false*.
               1. Else, set _optValue_ to ToString(_optValue_).
               1. Perform ? Set(_opts_, _optName_, _optValue_, *"true"*).
-          1. Let _dateTimeFormat_ be ? Construct(%Intl.DateTimeFormat%, &laquo; « _locale_, _opts_ »).
+          1. Let _dateTimeFormat_ be ? Construct(%Intl.DateTimeFormat%, « _locale_, _opts_ »).
           1. Let _toPartsClosure_ be a new Abstract Closure with no parameters that captures _value_, _source_, and _dateTimeFormat_ and performs the following steps when called:
             1. Let _parts_ be ? Call(Intl.DateTimeFormat.prototype.formatToParts, _dateTimeFormat_, « _value_ »).
             1. Let _result_ be OrdinaryObjectCreate(%Object.prototype%).
