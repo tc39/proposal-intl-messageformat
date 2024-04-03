@@ -2,7 +2,9 @@
 
 ## Status
 
-Champions: Eemeli Aro (Mozilla/OpenJS Foundation), Daniel Minor (Mozilla)
+Champions: Eemeli Aro (Mozilla/OpenJS Foundation)
+
+Former Champions: Daniel Minor (Mozilla)
 
 ### Stage: 1
 
