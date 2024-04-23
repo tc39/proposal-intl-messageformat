@@ -553,7 +553,8 @@ contributors: Eemeli Aro
         </emu-alg>
 
         <p>
-          The *"length"* property of a MessageFormat number function is *3*.
+          The *"length"* property of a MessageFormat dateTime function is *3*.
+        </p>
         </p>
       </emu-clause>
     </emu-clause>
