@@ -323,13 +323,13 @@ contributors: Eemeli Aro
       </dl>
 
         <emu-alg>
-          1. let value
           1. If Type(_input_) is Object, then
             1. If HasProperty(_input_, *"options"*) is *true*, then
               1. Let _inputOptions_ be ? Get(_input_, *"options"*).
               1. Perform ? Call(Object.assign, *undefined*, « _opts_, _inputOptions_ »).
-            1. Let _valueOf_ be ? Get(_input_, *"valueOf"*).
-            1. If InstanceOfOperator(_input_, %Date%) is *false* and IsCallable(_valueOf_) is *true*, set _input_ to Call(_valueOf_, _input_).
+            1. If InstanceOfOperator(_input_, %Date%) is *false*,then
+              1. Let _valueOf_ be ? Get(_input_, *"valueOf"*).
+              1. If IsCallable(_valueOf_) is *true*, set _input_ to Call(_valueOf_, _input_).
           1. If Type(_input_) is Number or String, let _value_ be ? Construct(%Date%, « _input_ »).
           1. Else if Type(_input_) is Object, let _value_ be _input_.
           1. If InstanceOfOperator(_value_, %Date%) is *false*, throw a *TypeError* exception.
@@ -392,7 +392,7 @@ contributors: Eemeli Aro
         1. Let _stringSteps_ be the algorithm steps defined in <emu-xref href="#sec-messageformat-stringfunctions"></emu-xref>.
         1. Let _string_ be CreateBuiltinFunction(_stringSteps_, *3*, *"string"*, « »).
         1. Let _dateTimeSteps_ be the algorithm steps defined in <emu-xref href="#sec-messageformat-datetimefunctions"></emu-xref>.
-        1. Let _dateTime_ be CreateBuiltinFunction(_dateTimeSteps_, *3*, *"dateTime"*, « »).
+        1. Let _dateTime_ be CreateBuiltinFunction(_dateTimeSteps_, *3*, *"datetime"*, « »).
         1. Let _dateSteps_ be the algorithm steps defined in <emu-xref href="#sec-messageformat-datefunctions"></emu-xref>.
         1. Let _date_ be CreateBuiltinFunction(_dateSteps_, *3*, *"date"*, « »).
         1. Let _functions_ be OrdinaryObjectCreate(%Object.prototype%).
@@ -611,7 +611,7 @@ contributors: Eemeli Aro
           1. Let _value_ be ? HandleDateTimeInput(_input_, _opts_).
           1. Let _dateStyle_ be ! Get(_options_, *"style"*).
           1. If _dateStyle_ is *null* or *undefined*, then
-            1. Set _dateStyle_ to ! Get(_opts_, *"timeStyle"*).
+            1. Set _dateStyle_ to ! Get(_opts_, *"dateStyle"*).
             1. If _dateStyle_ is *null* or *undefined*, then
               1. Set _dateStyle_ to *"short"*.
           1. For each String _optName_ of ? EnumerableOwnProperties(_options_, ~key~),
