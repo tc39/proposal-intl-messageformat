@@ -391,12 +391,15 @@ contributors: Eemeli Aro
         1. Let _number_ be CreateBuiltinFunction(_numberSteps_, *3*, *"number"*, « »).
         1. Let _stringSteps_ be the algorithm steps defined in <emu-xref href="#sec-messageformat-stringfunctions"></emu-xref>.
         1. Let _string_ be CreateBuiltinFunction(_stringSteps_, *3*, *"string"*, « »).
-        1. Let _dateTimeSteps_ be the algorithm steps defined in <emu-xref href="#sec-messageformat-stringfunctions"></emu-xref>.
-        1. Let _dateTime_ be CreateBuiltinFunction(_dateTimeSteps_, *3*, *"string"*, « »).
+        1. Let _dateTimeSteps_ be the algorithm steps defined in <emu-xref href="#sec-messageformat-datetimefunctions"></emu-xref>.
+        1. Let _dateTime_ be CreateBuiltinFunction(_dateTimeSteps_, *3*, *"dateTime"*, « »).
+        1. Let _dateSteps_ be the algorithm steps defined in <emu-xref href="#sec-messageformat-datefunctions"></emu-xref>.
+        1. Let _date_ be CreateBuiltinFunction(_dateSteps_, *3*, *"date"*, « »).
         1. Let _functions_ be OrdinaryObjectCreate(%Object.prototype%).
         1. Perform ! CreateDataPropertyOrThrow(_functions_, *"number"*, _number_).
         1. Perform ! CreateDataPropertyOrThrow(_functions_, *"string"*, _string_).
         1. Perform ! CreateDataPropertyOrThrow(_functions_, *"datetime"*, _dateTime_).
+        1. Perform ! CreateDataPropertyOrThrow(_functions_, *"date"*, _date_).
         1. For each String _name_ of ? EnumerableOwnProperties(_userFunctions_, ~key~),
            1. Let _func_ be ? Get(_userFunctions_, _name_).
            1. If IsCallable(_func_) is *true*, then
