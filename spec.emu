@@ -324,14 +324,16 @@ contributors: Eemeli Aro
 
         <emu-alg>
           1. If Type(_input_) is Object, then
-            1. If InstanceOfOperator(_input_, %Date%) is *false*,then
-              1. If HasProperty(_input_, *"options"*) is *true*, then
-                1. Perform ? Call(Object.assign, *undefined*, « _opts_, Get(_input_, *"options"*) »).
+            1. If InstanceOfOperator(_input_, %Date%) is *true*,then
+              1. Let _value_ be _input_.
+            1. Else,
               1. Let _valueOf_ be ? Get(_input_, *"valueOf"*).
-              1. If IsCallable(_valueOf_) is *true*, set _input_ to Call(_valueOf_, _input_).
-          1. If Type(_input_) is Number or String, let _input_ be ? Construct(%Date%, « _input_ »).
-          1. If InstanceOfOperator(_input_, %Date%) is *false*, throw a *TypeError* exception.
-          1. Return _input_.
+              1. If IsCallable(_valueOf_) is *true*, let _value_ be Call(_valueOf_, _input_), else throw a *TypeError* exception.
+            1. If HasProperty(_input_, *"options"*) is *true*, then
+              1. Perform ? Call(Object.assign, *undefined*, « _opts_, Get(_input_, *"options"*) »).
+          1. Else if Type(_input_) is Number or String, then
+            1. Let _value_ be ? Construct(%Date%, « _input_ »).
+          1. Return _value_.
         </emu-alg>
     </emu-clause>
 
@@ -563,10 +565,10 @@ contributors: Eemeli Aro
 
         <emu-alg>
           1. Let _locale_ be ! Get(_funcCtx_, *"locale"*).
-          1. Let _localeMatcher_ be ! Get(_funcCtx_, *"localeMatcher"*).
           1. Let _source_ be ! Get(_funcCtx_, *"source"*).
           1. Let _opts_ be OrdinaryObjectCreate(%Object.prototype%).
-          1. Perform ! CreateDataPropertyOrThrow(_opt_, *"localeMatcher"*, _localeMatcher_).
+          1. Let _localeMatcher_ be ! Get(_funcCtx_, *"localeMatcher"*).
+          1. Perform ! CreateDataPropertyOrThrow(_opts_, *"localeMatcher"*, _localeMatcher_).
           1. Let _value_ be ? HandleDateTimeInput(_input_, _opts_).
           1. For each String _optName_ of ? EnumerableOwnProperties(_options_, ~key~),
             1. If _optName_ is not *"locale"*, then
@@ -602,10 +604,10 @@ contributors: Eemeli Aro
 
         <emu-alg>
           1. Let _locale_ be ! Get(_funcCtx_, *"locale"*).
-          1. Let _localeMatcher_ be ! Get(_funcCtx_, *"localeMatcher"*).
           1. Let _source_ be ! Get(_funcCtx_, *"source"*).
           1. Let _opts_ be OrdinaryObjectCreate(%Object.prototype%).
-          1. Perform ! CreateDataPropertyOrThrow(_opt_, *"localeMatcher"*, _localeMatcher_).
+          1. Let _localeMatcher_ be ! Get(_funcCtx_, *"localeMatcher"*).
+          1. Perform ! CreateDataPropertyOrThrow(_opts_, *"localeMatcher"*, _localeMatcher_).
           1. Let _value_ be ? HandleDateTimeInput(_input_, _opts_).
           1. Let _dateStyle_ be ! Get(_options_, *"style"*).
           1. If _dateStyle_ is *null* or *undefined*, then
