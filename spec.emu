@@ -58,7 +58,7 @@ contributors: Eemeli Aro
         1. Let _userFunctions_ be ? Get(_options_, *"functions"*).
         1. Let _functions_ be ? GetMessageFunctions(_userFunctions_).
         1. Set _messageFormat_.[[MessageData]] to _msgData_.
-        1. Set _messageFormat_.[[RequestedLocales]] to _requestedLocales_.
+        1. Set _messageFormat_.[[RequestedLocales]] to CreateArrayFromList(_requestedLocales_).
         1. Set _messageFormat_.[[LocaleMatcher]] to _matcher_.
         1. Set _messageFormat_.[[Functions]] to _functions_.
         1. Return _messageFormat_.
