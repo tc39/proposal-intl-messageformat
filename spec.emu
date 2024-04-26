@@ -323,16 +323,21 @@ contributors: Eemeli Aro
       </dl>
 
         <emu-alg>
+          1. If InstanceOfOperator(_input_, %Date%) is *true*, then
+             1. If HasProperty(_input_, *"options"*) is *true*, then
+                1. Perform ? Call(Object.assign, *undefined*, « _opts_, Get(_input_, *"options"*) »).
+             1. Return _input_.
           1. If Type(_input_) is Object, then
-            1. If InstanceOfOperator(_input_, %Date%) is *true*,then
-              1. Let _value_ be _input_.
-            1. Else,
-              1. Let _valueOf_ be ? Get(_input_, *"valueOf"*).
-              1. If IsCallable(_valueOf_) is *true*, let _value_ be Call(_valueOf_, _input_), else throw a *TypeError* exception.
-            1. If HasProperty(_input_, *"options"*) is *true*, then
-              1. Perform ? Call(Object.assign, *undefined*, « _opts_, Get(_input_, *"options"*) »).
-          1. Else if Type(_input_) is Number or String, then
-            1. Let _value_ be ? Construct(%Date%, « _input_ »).
+             1. Let _valueOf_ be ? Get(_input_, *"valueOf"*).
+             1. If IsCallable(_valueOf_) is *true*, let _value_ be Call(_valueOf_, _input_).
+             1. Else throw a *TypeError* exception.
+             1. If HasProperty(_input_, *"options"*) is *true*, then
+                1. Perform ? Call(Object.assign, *undefined*, « _opts_, Get(_input_, *"options"*) »).
+          1. Else,
+             1. Let _value_ be _input_.
+          1. If Type(_value_) is Number or String, then
+             1. Return ? Construct(%Date%, « _value_ »).
+          1. If InstanceOfOperator(_value_, %Date%) is *false*, throw a *TypeError* exception.
           1. Return _value_.
         </emu-alg>
     </emu-clause>
