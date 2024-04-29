@@ -400,11 +400,14 @@ contributors: Eemeli Aro
         1. Let _dateTime_ be CreateBuiltinFunction(_dateTimeSteps_, *3*, *"datetime"*, « »).
         1. Let _dateSteps_ be the algorithm steps defined in <emu-xref href="#sec-messageformat-datefunctions"></emu-xref>.
         1. Let _date_ be CreateBuiltinFunction(_dateSteps_, *3*, *"date"*, « »).
+        1. Let _timeSteps_ be the algorithm steps defined in <emu-xref href="#sec-messageformat-timefunctions"></emu-xref>.
+        1. Let _time_ be CreateBuiltinFunction(_timeSteps_, *3*, *"time"*, « »).
         1. Let _functions_ be OrdinaryObjectCreate(%Object.prototype%).
         1. Perform ! CreateDataPropertyOrThrow(_functions_, *"number"*, _number_).
         1. Perform ! CreateDataPropertyOrThrow(_functions_, *"string"*, _string_).
         1. Perform ! CreateDataPropertyOrThrow(_functions_, *"datetime"*, _dateTime_).
         1. Perform ! CreateDataPropertyOrThrow(_functions_, *"date"*, _date_).
+        1. Perform ! CreateDataPropertyOrThrow(_functions_, *"time"*, _time_).
         1. For each String _name_ of ? EnumerableOwnProperties(_userFunctions_, ~key~),
            1. Let _func_ be ? Get(_userFunctions_, _name_).
            1. If IsCallable(_func_) is *true*, then
@@ -628,6 +631,39 @@ contributors: Eemeli Aro
 
         <p>
           The *"length"* property of a MessageFormat date function is *3*.
+        </p>
+      </emu-clause>
+
+      <emu-clause id="sec-messageformat-timefunctions">
+        <h1>MessageFormat Time Functions</h1>
+        <p>
+          A MessageFormat time function is an anonymous built-in function.
+        </p>
+        <p>
+          When a MessageFormat time function is called with arguments _funcCtx_ (an Object), _options_ (an Object), and _input_ (an ECMAScript language value), the following steps are taken:
+        </p>
+
+        <emu-alg>
+          1. Let _locale_ be ! Get(_funcCtx_, *"locale"*).
+          1. Let _source_ be ! Get(_funcCtx_, *"source"*).
+          1. Let _opts_ be OrdinaryObjectCreate(%Object.prototype%).
+          1. Let _localeMatcher_ be ! Get(_funcCtx_, *"localeMatcher"*).
+          1. Perform ! CreateDataPropertyOrThrow(_opts_, *"localeMatcher"*, _localeMatcher_).
+          1. Let _value_ be ? HandleDateTimeInput(_input_, _opts_).
+          1. Let _timeStyle_ be ! Get(_options_, *"style"*).
+          1. If _timeStyle_ is *null* or *undefined*, then
+            1. Set _timeStyle_ to ! Get(_opts_, *"timeStyle"*).
+            1. If _timeStyle_ is *null* or *undefined*, then
+              1. Set _timeStyle_ to *"short"*.
+          1. For each String _optName_ of ? EnumerableOwnProperties(_opts_, ~key~),
+            1. If _optName_ is not *"calendar"*, *"localeMatcher"*, *"hour12"*, *"hourCycle"*, *"numberingSystem"*, or *"timeZone"*, then
+              1. Perform ? DeletePropertyOrThrow(_opts_, _optName_).
+          1. Perform ? Set(_opts_, *"timeStyle"*, ToString(_timeStyle_)).
+          1. Return ? DateTimeMessageValue(_value_, _locale_, _opts_, _source_).
+        </emu-alg>
+
+        <p>
+          The *"length"* property of a MessageFormat time function is *3*.
         </p>
       </emu-clause>
     </emu-clause>
