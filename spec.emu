@@ -346,12 +346,13 @@ contributors: Eemeli Aro
       <h1>
         DateTimeMessageValue (
           _value_: a Date object,
-          _locale_: an ECMAScript value,
           _opts_: an Object,
-          _source_: an ECMAScript value,
+          _funcCtx_: an Object,
         ): an ECMAScript value
       </h1>
       <emu-alg>
+        1. Let _locale_ be ! Get(_funcCtx_, *"locale"*).
+        1. Let _source_ be ! Get(_funcCtx_, *"source"*).
         1. Let _dateTimeFormat_ be ? Construct(%Intl.DateTimeFormat%, « _locale_, _opts_ »).
         1. Let _toPartsClosure_ be a new Abstract Closure with no parameters that captures _value_, _source_, and _dateTimeFormat_ and performs the following steps when called:
           1. Let _parts_ be ? Call(Intl.DateTimeFormat.prototype.formatToParts, _dateTimeFormat_, « _value_ »).
@@ -572,8 +573,6 @@ contributors: Eemeli Aro
         </p>
 
         <emu-alg>
-          1. Let _locale_ be ! Get(_funcCtx_, *"locale"*).
-          1. Let _source_ be ! Get(_funcCtx_, *"source"*).
           1. Let _opts_ be OrdinaryObjectCreate(%Object.prototype%).
           1. Let _localeMatcher_ be ! Get(_funcCtx_, *"localeMatcher"*).
           1. Perform ! CreateDataPropertyOrThrow(_opts_, *"localeMatcher"*, _localeMatcher_).
@@ -593,7 +592,7 @@ contributors: Eemeli Aro
                   1. Set _optValue_ to *false*.
               1. Else, set _optValue_ to ToString(_optValue_).
               1. Perform ? Set(_opts_, _optName_, _optValue_, *"true"*).
-          1. Return ? DateTimeMessageValue(_value_, _locale_, _opts_, _source_).
+          1. Return ? DateTimeMessageValue(_value_, _opts_, _funcCtx_).
         </emu-alg>
 
         <p>
@@ -611,8 +610,6 @@ contributors: Eemeli Aro
         </p>
 
         <emu-alg>
-          1. Let _locale_ be ! Get(_funcCtx_, *"locale"*).
-          1. Let _source_ be ! Get(_funcCtx_, *"source"*).
           1. Let _opts_ be OrdinaryObjectCreate(%Object.prototype%).
           1. Let _localeMatcher_ be ! Get(_funcCtx_, *"localeMatcher"*).
           1. Perform ! CreateDataPropertyOrThrow(_opts_, *"localeMatcher"*, _localeMatcher_).
@@ -626,7 +623,7 @@ contributors: Eemeli Aro
             1. If _optName_ is not *"calendar"*, *"localeMatcher"*, *"hour12"*, *"hourCycle"*, *"numberingSystem"*, or *"timeZone"*, then
               1. Perform ? DeletePropertyOrThrow(_opts_, _optName_).
           1. Perform ? Set(_opts_, *"dateStyle"*, ToString(_dateStyle_)).
-          1. Return ? DateTimeMessageValue(_value_, _locale_, _opts_, _source_).
+          1. Return ? DateTimeMessageValue(_value_, _opts_, _funcCtx_).
         </emu-alg>
 
         <p>
@@ -644,8 +641,6 @@ contributors: Eemeli Aro
         </p>
 
         <emu-alg>
-          1. Let _locale_ be ! Get(_funcCtx_, *"locale"*).
-          1. Let _source_ be ! Get(_funcCtx_, *"source"*).
           1. Let _opts_ be OrdinaryObjectCreate(%Object.prototype%).
           1. Let _localeMatcher_ be ! Get(_funcCtx_, *"localeMatcher"*).
           1. Perform ! CreateDataPropertyOrThrow(_opts_, *"localeMatcher"*, _localeMatcher_).
@@ -659,7 +654,7 @@ contributors: Eemeli Aro
             1. If _optName_ is not *"calendar"*, *"localeMatcher"*, *"hour12"*, *"hourCycle"*, *"numberingSystem"*, or *"timeZone"*, then
               1. Perform ? DeletePropertyOrThrow(_opts_, _optName_).
           1. Perform ? Set(_opts_, *"timeStyle"*, ToString(_timeStyle_)).
-          1. Return ? DateTimeMessageValue(_value_, _locale_, _opts_, _source_).
+          1. Return ? DateTimeMessageValue(_value_, _opts_, _funcCtx_).
         </emu-alg>
 
         <p>
