@@ -278,7 +278,7 @@ contributors: Eemeli Aro
         of the Unicode MessageFormat 2.0 specification.
       </li>
       <li>
-        [[RequestedLocales]] is a List of String values
+        [[RequestedLocales]] is an Array of String values
         with the canonicalized language tags of the requested locales
         to use for message formatting.
       </li>
