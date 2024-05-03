@@ -310,7 +310,7 @@ contributors: Eemeli Aro
       </dl>
     </emu-clause>
 
-    <emu-clause id="sec-handledatetimeinput" type="abtract operation">
+    <emu-clause id="sec-handledatetimeinput" type="abstract operation">
       <h1>
         HandleDateTimeInput (
           _input_: an ECMAScript value,
