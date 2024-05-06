@@ -239,14 +239,6 @@ contributors: Eemeli Aro
             <td>[[LocaleMatcher]]</td>
             <td>*"localeMatcher"*</td>
           </tr>
-          <tr>
-            <td>[[RequestedLocales]]</td>
-            <td>*"locales"*</td>
-          </tr>
-          <tr>
-            <td>[[MessageData]]</td>
-            <td>*"message"*</td>
-          </tr>
         </table>
       </emu-table>
     </emu-clause>
@@ -906,7 +898,8 @@ contributors: Eemeli Aro
              1. Perform ? HandleMessageFormatError(_ctx_, _error_).
              1. Return ResolveFallback(_source_).
           1. Let _funcCtx_ be OrdinaryObjectCreate(%Object.prototype%).
-          1. Perform ! CreateDataPropertyOrThrow(_funcCtx_, *"locale"*, _ctx_.[[MessageFormat]].[[RequestedLocales]]).
+          1. Let _locales_ be CreateArrayFromList(_ctx_.[[MessageFormat]].[[RequestedLocales]]).
+          1. Perform ! CreateDataPropertyOrThrow(_funcCtx_, *"locale"*, _locales_).
           1. Perform ! CreateDataPropertyOrThrow(_funcCtx_, *"localeMatcher"*, _ctx_.[[MessageFormat]].[[LocaleMatcher]]).
           1. Perform ! CreateDataPropertyOrThrow(_funcCtx_, *"source"*, _source_).
           1. Let _options_ be OrdinaryObjectCreate(%Object.prototype%).

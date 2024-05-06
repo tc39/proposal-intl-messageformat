@@ -201,9 +201,7 @@ interface ResolvedMessageFormatOptions {
   bidiIsolation: 'compatibility' | 'none';
   dir: 'ltr' | 'rtl' | 'auto';
   functions: { [key: string]: MessageFunction };
-  locales: string[];
   localeMatcher: 'best fit' | 'lookup';
-  message: MessageData;
 }
 ```
 
