@@ -69,7 +69,7 @@ In code, with the API proposed below, this would be used like this:
 
 ```js
 const source = ... // string source of the message as above
-const mf = new Intl.MessageFormat(source, 'en');
+const mf = new Intl.MessageFormat('en', source);
 const notifications = mf.format({ count: 1 });
 // 'You have 1 new notification'
 ```
@@ -79,11 +79,11 @@ those are of course also supported by the proposed API:
 
 ```js
 // A plain message
-const mf1 = new Intl.MessageFormat('Hello!', 'en');
+const mf1 = new Intl.MessageFormat('en', 'Hello!');
 mf1.format(); // 'Hello!'
 
 // A parametric message, formatted to parts
-const mf2 = new Intl.MessageFormat('Hello {$place}!', 'en');
+const mf2 = new Intl.MessageFormat('en', 'Hello {$place}!');
 const greet = mf2.formatToParts({ place: 'world' });
 /* [
   { type: 'text', value: 'Hello ' },
@@ -144,8 +144,8 @@ Calling the constructor may throw an error if the `source` includes an MF2
 ```ts
 interface MessageFormat {
   new (
+    locales: string | string[] | undefined,
     source: MessageData | string,
-    locales?: string | string[],
     options?: MessageFormatOptions
   ): MessageFormat;
 
