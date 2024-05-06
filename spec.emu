@@ -23,35 +23,35 @@ contributors: Eemeli Aro
     </p>
 
     <emu-clause id="sec-intl.messageformat">
-      <h1>Intl.MessageFormat ( _source_, [ _locales_ [ , _options_ ] ] )</h1>
+      <h1>Intl.MessageFormat ( _locales_, _source_ [ , _options_ ] )</h1>
 
       <p>
         When the `Intl.MessageFormat` function is called with arguments
-        _source_, _locales_, and _options_, the following steps are taken:
+        _locales_, _source_, and _options_, the following steps are taken:
       </p>
 
       <emu-alg>
         1. If NewTarget is *undefined*, throw a *TypeError* exception.
         1. Let _messageFormat_ be ? OrdinaryCreateFromConstructor(NewTarget, %MessageFormat.prototype%,
            &laquo; [[InitializedMessageFormat]], [[LocaleMatcher]], [[MessageData]], [[RequestedLocales]], [[Runtime]] &raquo;).
-        1. Return ? InitializeMessageFormat(_messageFormat_, _source_, _locales_, _options_).
+        1. Return ? InitializeMessageFormat(_messageFormat_, _locales_, _source_, _options_).
       </emu-alg>
     </emu-clause>
 
     <emu-clause id="sec-initializemessageformat" aoid="InitializeMessageFormat">
-      <h1>InitializeMessageFormat ( _messageFormat_, _source_, _locales_, _options_ )</h1>
+      <h1>InitializeMessageFormat ( _messageFormat_, _locales_, _source_, _options_ )</h1>
 
       <p>
         The abstract operation InitializeMessageFormat accepts the arguments
-        _messageFormat_ (which must be an object), _source_, _locales_, and _options_.
+        _messageFormat_ (which must be an object), _locales_, _source_, and _options_.
         It initializes _messageFormat_ as a MessageFormat object.
         The following steps are taken:
       </p>
 
       <emu-alg>
+        1. Let _requestedLocales_ be ? CanonicalizeLocaleList(_locales_).
         1. If _source_ is *undefined*, throw a *TypeError* exception.
         1. Let _msgData_ be ? GetMessageData(_source_).
-        1. Let _requestedLocales_ be ? CanonicalizeLocaleList(_locales_).
         1. Set _options_ to ? GetOptionsObject(_options_).
         1. Let _matcher_ be ? GetOption(_options_, *"localeMatcher"*, ~string~,
            &laquo; *"lookup"*, *"best fit"* &raquo;, *"best fit"*).
