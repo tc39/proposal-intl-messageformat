@@ -151,7 +151,7 @@ contributors: Eemeli Aro
               1. If _toStringResult_ is a normal completion, then
                  1. Let _stringValue_ be _toStringResult_.[[Value]].
               1. Else,
-                 1. Perform ? HandleMessageFormatError(_ctx_, _stringResult_).
+                 1. Perform ? HandleMessageFormatError(_ctx_, _toStringResult_).
                  1. Let _source_ be MessageValueSource(_mv_).
                  1. Let _stringValue_ be MessageFallbackString(_source_).
            1. Set _result_ to the string-concatenation of _result_ and _stringValue_.
