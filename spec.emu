@@ -425,14 +425,14 @@ contributors: Eemeli Aro
           1. Let _source_ be ! Get(_funcCtx_, *"source"*).
           1. Let _opts_ be OrdinaryObjectCreate(%Object.prototype%).
           1. Perform ! CreateDataPropertyOrThrow(_opt_, *"localeMatcher"*, _localeMatcher_).
-          1. If Type(_input_) is String, then
-             1. Set _input_ to ? Call(JSON.parse, %JSON%, « _input_ »).
-          1. Else if Type(_input_) is Object, then
+          1. If Type(_input_) is Object, then
              1. Let _valueOf_ be ? Get(_input_, *"valueOf"*).
              1. If IsCallable(_valueOf_) is *true*, then
                 1. Let _inputOptions_ be ? Get(_input_, *"options"*).
                 1. Perform ? Call(Object.assign, *undefined*, « _opts_, _inputOptions_ »).
                 1. Set _input_ to ? Call(_valueOf_, _input_).
+          1. If Type(_input_) is String, then
+             1. Set _input_ to ? Call(JSON.parse, %JSON%, « _input_ »).
           1. If Type(_input_) is not Number or BigInt, throw a *TypeError* exception.
           1. Let _numberOptions_ be « *"minimumIntegerDigits"*, *"minimumFractionDigits"*, *"maximumFractionDigits"*, *"minimumSignificantDigits"*, *"maximumSignificantDigits"*, *"roundingIncrement"* ».
           1. Let _booleanOptions_ be « *"useGrouping"* ».
