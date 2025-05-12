@@ -518,15 +518,15 @@ contributors: Eemeli Aro
 
         <emu-alg>
           1. Let _str_ be ? ToString(_input_).
+          1. Let _source_ be ! Get(_funcCtx_, *"source"*).
+          1. Let _locale_ be ! Get(_funcCtx_, *"locale"*).
+          1. Let _locale0_ be ! Get(_locale_, *"0"*).
           1. Let _selectKeyClosure_ be a new Abstract Closure with parameters (_keys_) that captures _str_ and performs the following steps when called:
              1. Let _keyList_ be ? CreateListFromArrayLike(_keys_, « String »).
              1. If _keyList_ contains _str_, return _str_.
              1. Else, return *null*.
           1. Let _selectKey_ be CreateBuiltinFunction(_selectKeyClosure_, *1*, *"selectKey"*, « »).
           1. Let _toPartsClosure_ be a new Abstract Closure with no parameters that captures _funcCtx_ and _str_ and performs the following steps when called:
-             1. Let _source_ be ! Get(_funcCtx_, *"source"*).
-             1. Let _locale_ be ! Get(_funcCtx_, *"locale"*).
-             1. Let _locale0_ be ! Get(_locale_, *"0"*).
              1. Let _result_ be OrdinaryObjectCreate(%Object.prototype%).
              1. Perform ! CreateDataPropertyOrThrow(_result_, *"type"*, *"string"*).
              1. Perform ! CreateDataPropertyOrThrow(_result_, *"source"*, _source_).
@@ -539,10 +539,9 @@ contributors: Eemeli Aro
           1. Let _toString_ be CreateBuiltinFunction(_toStringClosure_, *0*, *"toString"*, « »).
           1. Let _valueOf_ be CreateBuiltinFunction(_toStringClosure_, *0*, *"valueOf"*, « »).
           1. Let _mv_ be OrdinaryObjectCreate(%Object.prototype%).
-          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"type"*, *"number"*).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"type"*, *"string"*).
           1. Perform ! CreateDataPropertyOrThrow(_mv_, *"source"*, _source_).
-          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"locale"*, _numberFormat_.[[Locale]]).
-          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"options"*, _opts_).
+          1. Perform ! CreateDataPropertyOrThrow(_mv_, *"locale"*, _locale0_).
           1. Perform ! CreateDataPropertyOrThrow(_mv_, *"selectKey"*, _selectKey_).
           1. Perform ! CreateDataPropertyOrThrow(_mv_, *"toParts"*, _toParts_).
           1. Perform ! CreateDataPropertyOrThrow(_mv_, *"toString"*, _toString_).
