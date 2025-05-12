@@ -173,8 +173,8 @@ contributors: Eemeli Aro
         1. Let _ctx_ be ? CreateMessageFormatContext(_mf_, _values_, _onError_).
         1. Let _msg_ be ? ResolveMessage(_ctx_).
         1. Let _result_ be a new empty List.
-        1. For each element _mv_ of _msg_, do
-           1. If Type(_mv_) is String, then
+        1. For each element _el_ of _msg_, do
+           1. If Type(_el_) is String, then
               1. Let _textPart_ be OrdinaryObjectCreate(%Object.prototype%).
               1. Perform ! CreateDataPropertyOrThrow(_textPart_, *"type"*, *"text"*).
               1. Perform ! CreateDataPropertyOrThrow(_textPart_, *"value"*, _el_).
